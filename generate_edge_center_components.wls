@@ -4,13 +4,12 @@ numericalValue = True;
 
 shapes = {
     "polytope_3_3_4"
-    (* "polytope_3_4_3_alt" *)
-    (* "polytope_3_3_5" *)
-
+    (* , "polytope_3_4_3_alt" *)
+    (* , "polytope_3_3_5" *)
     (* "polytope_3_3_3" *)
     (* , "polytope_3_4_3" *)
-    (* , "polytope_4_3_3" *)
-    (* , "polytope_5_3_3" *)
+    (* "polytope_4_3_3" *)
+    (* "polytope_5_3_3" *)
 };
 
 exportToPov = True;
@@ -83,46 +82,101 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
     polytopeCellsFileName = FileNameJoin[{dataFolder, "cells", shape <> ".wl"}];
     polytopeFileName = FileNameJoin[{dataFolder, shape <> ".wl"}];
 
+    If[!FileExistsQ[polytopeFileName],
+        Print["Generating polytope data for " <> polytopeCellsFileName];
+        polytopeCells = Get[polytopeCellsFileName];
+        Print[polytopeCells//Length]; (* 24 *)
+        polytopeFaces = Union[ Flatten[polytopeCells, 1], SameTest -> sameCenter];
+        Print[polytopeFaces//Length]; (* 96 *)
+        polytopeEdges = Union[ Flatten[Map[getEdgesFromFace, polytopeFaces], 1], SameTest -> sameCenter];
+        Print[polytopeEdges//Length]; (* 96 *)
+        polytopeVertices = Union[ Flatten[polytopeFaces,1], SameTest -> sameVertex];
+        Print[polytopeVertices//Length]; (* 24 *)
+
+        polytopeData = <|
+            "cells" -> polytopeCells,
+            "faces" -> polytopeFaces,
+            "edges" -> polytopeEdges,
+            "vertices" -> polytopeVertices
+        |>;
+
+        Save[polytopeFileName, polytopeData];
+        Print["Saved polytope data to " <> polytopeFileName];
+    ];
+
     polytopeData = Get[polytopeFileName];
-    
-    componentIndex = 1;
-    polytopeVertices = polytopeData["componentVertices1"][[componentIndex]];
-    polytopeFaces = polytopeData["componentFaces1"][[componentIndex]];
+    polytopeEdges = polytopeData["edges"];
+    polytopeFaces = polytopeData["faces"];
+    polytopeVertices = polytopeData["vertices"];
+    polytopeCells = polytopeData["cells"];
 
-    faceCenters = Mean/@polytopeFaces;
+    edgeCenters = Mean/@polytopeEdges//Simplify;
+    normEdgeCenter = Norm[edgeCenters[[1]]];
+
+(*     faceCenters = Mean/@polytopeFaces;
     normFaceCenter = Norm[faceCenters[[1]]];
-
+ *)
     vertex1 = SortBy[polytopeVertices, N[-#[[4]]]&][[1]];
     normVertex = Norm[vertex1];
-    vertex1 = vertex1/Norm[vertex1]*normFaceCenter//FullSimplify;
+    vertex1 = vertex1/Norm[vertex1]*normEdgeCenter//FullSimplify;
     Print["vertex1: "];
     Print[vertex1];
-    normalizedVertices = polytopeVertices/normVertex * normFaceCenter//FullSimplify;
+    normalizedVertices = polytopeVertices/normVertex * normEdgeCenter//FullSimplify;
 
     For[signature = 1, signature >= -1, signature = signature - 2,
         Print["signature = " <> ToString[signature]];
 
-        seedFaceCenters = faceCenters;
+        seedEdgeCenters = {};
         componentVertices = {};
         componentEdges = {};
         componentFaces = {};
         componentCells = {};
         otherVectors = IdentityMatrix[4];
 
+        If[shape == "polytope_3_3_4",
+            seedEdgeCenters = Select[edgeCenters, #[[4]] == 1/2 && #[[1]] + #[[2]] + #[[3]] > 0&];
+        ];
 
-        (* Map[#[[4]]&, faceCenters]//Tally *)
+        If[shape == "polytope_3_4_3_alt",
+            seedEdgeCenters = Select[edgeCenters, #[[4]] == 1 && #[[3]] == 1 &];
+        ];
 
-        Print["Number of seedFaceCenters:"];
-        Print[seedFaceCenters//Length];
+        If[shape == "polytope_3_3_5",
+            seedEdgeCenters = Select[edgeCenters, Simplify[#[[4]]] == (5 + Sqrt[5])/4 && #[[1]] + #[[2]]*0.1 + #[[3]]*0.01 + #[[4]] * 0.001> 0 &]//Simplify;
+            otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0}};
+        ];
 
-        For[seedIndex = 1, seedIndex <= Length[seedFaceCenters], seedIndex++,
+        If[shape == "polytope_3_3_3",
+            (* doesn't work *)
+            seedEdgeCenters = edgeCenters;
+        ];
+
+        If[shape == "polytope_4_3_3",
+            (* doesn't work *)
+            seedEdgeCenters = edgeCenters[[{1}]];
+        ];
+
+        If[shape == "polytope_5_3_3",
+            (* doesn't work *)
+            seedEdgeCenters = edgeCenters[[{20}]];
+            otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0.0}};
+        ];
+
+        (* Map[#[[4]]&, edgeCenters]//Tally *)
+
+        Print["Number of seedEdgeCenters:"];
+        Print[seedEdgeCenters//Length];
+
+        For[seedIndex = 1, seedIndex <= Length[seedEdgeCenters], seedIndex++,
+            Print["seedIndex"];
             Print[seedIndex];
-            faceCenter1 = seedFaceCenters[[seedIndex]];
-            Print[faceCenter1];
-            If[shape == "polytope_3_3_5" && seedIndex == 9,
+            seedPoint = seedEdgeCenters[[seedIndex]];
+            Print[seedPoint];
+            If[shape == "polytope_3_3_5" && seedIndex == 5,
                 otherVectors = {{1, 0, 0, 0}, {0, 1, 0, 0}};
             ];
-            orth4dRaw = Orthogonalize[Join[{vertex1, faceCenter1}, otherVectors]]//Simplify;
+            Print["Orthogonalizing"];
+            orth4dRaw = Orthogonalize[Join[{vertex1, seedPoint}, otherVectors]]//Simplify;
             orth4d = Select[orth4dRaw, Norm[#] > epsilon&];
 
             If[Length[orth4d] < 4,
@@ -138,13 +192,13 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
             If[Det[orth4d] * signature < 0, orth4d = {orth4d[[1]], orth4d[[2]], orth4d[[4]], orth4d[[3]]}];
             Print["orth4d computed"];
 
-            theta = ArcCos[faceCenter1.vertex1/Norm[vertex1]/Norm[faceCenter1]];
+            theta = ArcCos[seedPoint.vertex1/Norm[vertex1]/Norm[seedPoint]];
             rot4d = FullSimplify[Transpose[orth4d].doubleRotation[-theta].orth4d];
 
-            newVertices = polytopeVertices.rot4d / normVertex * normFaceCenter//FullSimplify;
-            newEdges = Map[#.rot4d&, polytopeEdges] / normVertex * normFaceCenter//FullSimplify;
-            newFaces = Map[#.rot4d&, polytopeFaces] / normVertex * normFaceCenter//FullSimplify;
-            newCells = Map[#.rot4d&, polytopeCells, {2}] / normVertex * normFaceCenter//FullSimplify;
+            newVertices = polytopeVertices.rot4d / normVertex * normEdgeCenter//FullSimplify;
+            newEdges = Map[#.rot4d&, polytopeEdges] / normVertex * normEdgeCenter//FullSimplify;
+            newFaces = Map[#.rot4d&, polytopeFaces] / normVertex * normEdgeCenter//FullSimplify;
+            newCells = Map[#.rot4d&, polytopeCells, {2}] / normVertex * normEdgeCenter//FullSimplify;
 
             AppendTo[componentVertices, newVertices];
             AppendTo[componentEdges, newEdges];
@@ -155,16 +209,41 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
         Print["number of components: " <> IntegerString[Length[componentVertices]] <> ". Each component contains: " <> IntegerString[Length[componentVertices[[1]]]] <> " vertices"];
         allComponentVertices = Union[Flatten[N[componentVertices], 1], SameTest -> SameMatrix];
         Print["all components done"];
-        ints = Intersection[N[faceCenters], N[allComponentVertices], SameTest -> SameMatrix];
-        Print[Length/@{allComponentVertices, faceCenters, ints}];
+        If[Length[allComponentVertices] != Length[componentVertices] * Length[componentVertices[[1]]],
+            Print["component vertices have overlaps"];
+            Throw[componentOverlap];
+        ];
+        ints = Intersection[N[edgeCenters], N[allComponentVertices], SameTest -> SameMatrix];
+        Print[Length/@{allComponentVertices, edgeCenters, ints}];
+        If[Length[ints] != Length[edgeCenters] || Length[ints] != Length[allComponentVertices],
+            Throw[notAllTargetsCovered];
+        ];
 
         signatureString = If[signature == 1, "1", "2"];
-
-        polytopeData["new" <> "componentVertices" <> signatureString] = componentVertices;
-        polytopeData["new" <> "componentEdges" <> signatureString] = componentEdges;
-        polytopeData["new" <> "componentFaces" <> signatureString] = componentFaces;
-        polytopeData["new" <> "componentCells" <> signatureString] = componentCells;
+        polytopeData["edgeComponentVertices" <> signatureString] = componentVertices;
+        polytopeData["edgeComponentEdges" <> signatureString] = componentEdges;
+        polytopeData["edgeComponentFaces" <> signatureString] = componentFaces;
+        polytopeData["edgeComponentCells" <> signatureString] = componentCells;
     ];
+    (* DeleteFile[polytopeFileName]; *)
     (* Save[polytopeFileName, polytopeData]; *)
     (* Print["Saved polytope component data to " <> polytopeFileName]; *)
 ];
+
+
+(* Intersection[N[edgeCenters], N[componentVertices[[1]]], SameTest -> SameMatrix]//Length *)
+
+(* Intersection[N[componentVertices[[1]]], N[componentVertices[[1]]], SameTest -> SameMatrix]//Length *)
+
+(* Intersection[polytopeData["edgeComponentVertices1"][[1]], polytopeData["edgeComponentVertices2"][[2]]]//Length *)
+
+(*
+For 334 (16-cell), the 24 edge centers are vertices of a 24-cell. The compound is the well known compound
+of 3 16-cells inside a 24-cell. No difference in signature 1 or -1.
+
+For 343 (24-cell), the 96 edge centers are 96 face centers of the dual 24-cell. The compound 
+is as same as the face center compound of 24-cell. Signatures 1 and -1 are different.
+
+
+
+*)

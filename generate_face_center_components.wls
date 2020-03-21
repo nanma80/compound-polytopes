@@ -3,13 +3,13 @@
 numericalValue = True;
 
 shapes = {
-    (* "polytope_3_3_4" *)
+    "polytope_3_3_4"
     (* "polytope_3_4_3_alt" *)
-    "polytope_3_3_5"
+    (* "polytope_3_3_5" *)
     (* "polytope_3_3_3" *)
     (* , "polytope_3_4_3" *)
-    (* , "polytope_4_3_3" *)
-    (* , "polytope_5_3_3" *)
+    (* "polytope_4_3_3" *)
+    (* "polytope_5_3_3" *)
 };
 
 exportToPov = True;
@@ -146,7 +146,18 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
 
         If[shape == "polytope_3_3_3",
             (* doesn't work *)
-            seedFaceCenters = faceCenters;
+            seedFaceCenters = faceCenters[[{1}]];
+        ];
+
+        If[shape == "polytope_4_3_3",
+            (* doesn't work *)
+            seedFaceCenters = faceCenters[[{3}]];
+        ];
+
+        If[shape == "polytope_5_3_3",
+            (* doesn't work *)
+            seedFaceCenters = faceCenters[[{1}]];
+            otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0.0}};
         ];
 
         (* Map[#[[4]]&, faceCenters]//Tally *)
@@ -194,16 +205,27 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
         Print["number of components: " <> IntegerString[Length[componentVertices]] <> ". Each component contains: " <> IntegerString[Length[componentVertices[[1]]]] <> " vertices"];
         allComponentVertices = Union[Flatten[N[componentVertices], 1], SameTest -> SameMatrix];
         Print["all components done"];
+        If[Length[allComponentVertices] != Length[componentVertices] * Length[componentVertices[[1]]],
+            Print["component vertices have overlaps"];
+            Throw[componentOverlap];
+        ];
         ints = Intersection[N[faceCenters], N[allComponentVertices], SameTest -> SameMatrix];
         Print[Length/@{allComponentVertices, faceCenters, ints}];
+        If[Length[ints] != Length[faceCenters] || Length[ints] != Length[allComponentVertices],
+            Throw[notAllTargetsCovered];
+        ];
 
         signatureString = If[signature == 1, "1", "2"];
-        KeyDropFrom[polytopeData, {"componentVertices", "componentEdges", "componentFaces", "componentCells"}];
-        polytopeData["componentVertices" <> signatureString] = componentVertices;
-        polytopeData["componentEdges" <> signatureString] = componentEdges;
-        polytopeData["componentFaces" <> signatureString] = componentFaces;
-        polytopeData["componentCells" <> signatureString] = componentCells;
+        KeyDropFrom[polytopeData, {
+                "componentVertices", "componentEdges", "componentFaces", "componentCells",
+                "componentVertices1", "componentEdges1", "componentFaces1", "componentCells1",
+                "componentVertices2", "componentEdges2", "componentFaces2", "componentCells2"}];
+        polytopeData["faceComponentVertices" <> signatureString] = componentVertices;
+        polytopeData["faceComponentEdges" <> signatureString] = componentEdges;
+        polytopeData["faceComponentFaces" <> signatureString] = componentFaces;
+        polytopeData["faceComponentCells" <> signatureString] = componentCells;
     ];
-    Save[polytopeFileName, polytopeData];
-    Print["Saved polytope component data to " <> polytopeFileName];
+    (* DeleteFile[polytopeFileName]; *)
+    (* Save[polytopeFileName, polytopeData]; *)
+    (* Print["Saved polytope component data to " <> polytopeFileName]; *)
 ];
