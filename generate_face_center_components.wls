@@ -2,6 +2,15 @@
 
 numericalValue = True;
 
+shapes = {
+    (* "polytope_3_3_4" *)
+    (* "polytope_3_4_3_alt" *)
+    "polytope_3_3_5"
+    (* , "polytope_3_4_3" *)
+    (* , "polytope_4_3_3" *)
+    (* , "polytope_5_3_3" *)
+};
+
 exportToPov = True;
 imageSize = {600, 450};
 perspective = True;
@@ -12,13 +21,10 @@ rangeFactor = 0.6;
 Needs["POVRayRender`"];
 ConfigurePOVRayRender["POVRayPath" -> "C:\\Program Files\\POV-Ray\\v3.7\\bin\\pvengine64.exe"];
 
-epsilon = 1*^-5;
+epsilon = 1.0*^-5;
 iterationLimit = 20;
 dataFolder = "data";
 imageFolder = "output";
-
-v3 = {0, 1, 1, 0};
-v4 = {0, 0, 0, 1};
 
 perspectiveProjection[point_, fullProjectionMatrix_, wDistance_ ] := projectToDirection[point, fullProjectionMatrix[[1;;3]]] / (1 + point.(fullProjectionMatrix[[4]])/wDistance);
 projectToDirection[vertex4d_, projectionMatrix_] := projectionMatrix.vertex4d;
@@ -26,7 +32,8 @@ getEdgesFromFace[face_] := Table[{face[[i+1]], face[[Mod[i+1, Length[face]] + 1]
 sameVertex[point1_, point2_] := point1 == point2;
 cubeVertices[dimension_] := 2 * Map[IntegerDigits[#, 2][[2;;dimension+1]]&, Table[k, {k, 2^dimension, 2 * 2^dimension - 1}]] - 1;
 allPlusMinus[v_] := Union[Map[(v #)&, cubeVertices[Length[v]]]];
-SameMatrix[m1_, m2_] := ( m1 == m2 ) || (Max[Max[N[Abs[m1 - m2]]]] < epsilon);
+(* SameMatrix[m1_, m2_] := ( m1 == m2 ) || (Max[Max[N[Abs[m1 - m2]]]] < epsilon); *)
+SameMatrix[m1_, m2_] := (Max[Max[N[Abs[m1 - m2]]]] < epsilon);
 sameCenter[edge1_, edge2_] := SameMatrix[Total[edge1], Total[edge2]];
 SameTotal[edge1_, edge2_] := SameMatrix[Total[edge1], Total[edge2]];
 getQString[q_, separator_] := If[IntegerQ[q], IntegerString[q], IntegerString[Numerator[q]] <> separator <> IntegerString[Denominator[q]]];
@@ -68,17 +75,9 @@ doubleRotation[theta_] := ArrayFlatten[{
     {0, RotationMatrix[theta]}
 }];
 
-shapes = {
-    "polytope_3_3_4"
-(*     , "polytope_3_4_3"
-    , "polytope_3_4_3_alt"
-    , "polytope_3_3_5"
-    , "polytope_4_3_3"
-    , "polytope_5_3_3" *)
-};
-
 For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
     shape = shapes[[shapeIndex]];
+    Print["shape: " <> shape];
     polytopeCellsFileName = FileNameJoin[{dataFolder, "cells", shape <> ".wl"}];
     polytopeFileName = FileNameJoin[{dataFolder, shape <> ".wl"}];
 
@@ -111,37 +110,89 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
     polytopeVertices = polytopeData["vertices"];
     polytopeCells = polytopeData["cells"];
 
-(*     Print[Length[polytopeCells]];
-    Print[Length[polytopeFaces]];
-    Print[Length[polytopeEdges]];
-    Print[Length[polytopeVertices]]; *)
+    faceCenters = Mean/@polytopeFaces;
+    normFaceCenter = Norm[faceCenters[[1]]];
 
-    vertex1 = polytopeVertices[[1]];
-    Print[vertex1];
+    vertex1 = SortBy[polytopeVertices, -#[[4]]&][[1]];
     normVertex = Norm[vertex1];
+    vertex1 = vertex1/Norm[vertex1]*normFaceCenter//FullSimplify;
+    Print["vertex1: "];
+    Print[vertex1];
+    normalizedVertices = polytopeVertices/normVertex * normFaceCenter//FullSimplify;
 
-    faceCenters = Total/@polytopeFaces;
-    normalizedFaceCenters = faceCenters/Norm[faceCenters[[1]]]*normVertex;
-    faceCenter1 = normalizedFaceCenters[[1]];
-    Print[faceCenter1];
+    seedFaceCenters = {};
+    componentVertices = {};
+    componentEdges = {};
+    componentFaces = {};
+    componentCells = {};
+    otherVectors = IdentityMatrix[4];
 
-    orth4d = Orthogonalize[{vertex1, faceCenter1, v3, v4}];
-    If[Abs[Det[orth4d]] < epsilon, 
-        Print["orth4d is singular"];
-        Throw[singular];
+    If[shape == "polytope_3_3_4",
+        seedFaceCenters = Select[faceCenters, #[[4]] == 0 && #[[3]] > 0&];
+    ];
+
+    If[shape == "polytope_3_4_3_alt",
+        seedFaceCenters = Select[faceCenters, #[[4]] == 4/3 && #[[3]] == 2/3 &];
+    ];
+
+    If[shape == "polytope_3_3_5",
+        seedFaceCenters = Select[faceCenters, Simplify[#[[4]]] == (1 + Sqrt[5])/2 && #[[1]] + #[[2]]*0.1 + #[[3]]*0.01 + #[[4]] * 0.001> 0 &]//Simplify;
+        otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0}};
+    ];
+
+    (* Map[#[[4]]&, faceCenters]//Tally *)
+
+    Print["Number of seedFaceCenters:"];
+    Print[seedFaceCenters//Length];
+
+    For[seedIndex = 1, seedIndex <= Length[seedFaceCenters], seedIndex++,
+        Print[seedIndex];
+        faceCenter1 = seedFaceCenters[[seedIndex]];
+        Print[faceCenter1];
+        If[shape == "polytope_3_3_5" && seedIndex == 9,
+            otherVectors = {{1, 0, 0, 0}, {0, 1, 0, 0}};
+        ];
+        orth4dRaw = Orthogonalize[Join[{vertex1, faceCenter1}, otherVectors]]//Simplify;
+        orth4d = Select[orth4dRaw, Norm[#] > epsilon&];
+
+        If[Length[orth4d] < 4,
+            Print["length of orth4d is: " <> IntegerString[Length[orth4d]]];
+            Throw[singular1];
         ];
 
-    If[Det[orth4d] < 0, orth4d = Orthogonalize[{vertex1, faceCenter1, v4, v3}]];
+        If[Abs[Det[orth4d]] < epsilon, 
+            Print["orth4d is singular. Unexpected"];
+            Throw[singular2];
+        ];
 
-    Print[orth4d[[1]]*normVertex - vertex1];
-    Print[orth4d[[2]]*normVertex - faceCenter1//N];
+        If[Det[orth4d] < 0, orth4d = {orth4d[[1]], orth4d[[2]], orth4d[[4]], orth4d[[3]]}];
+        Print["orth4d computed"];
 
-    theta = ArcCos[faceCenter1.vertex1/Norm[vertex1]/Norm[faceCenter1]];
-    rot4d = Transpose[orth4d].doubleRotation[-theta].orth4d;
-    Print[rot4d//Simplify];
+        theta = ArcCos[faceCenter1.vertex1/Norm[vertex1]/Norm[faceCenter1]];
+        rot4d = FullSimplify[Transpose[orth4d].doubleRotation[-theta].orth4d];
 
-    newVertices = polytopeVertices.rot4d;
+        newVertices = polytopeVertices.rot4d / normVertex * normFaceCenter//FullSimplify;
+        newEdges = Map[#.rot4d&, polytopeEdges] / normVertex * normFaceCenter//FullSimplify;
+        newFaces = Map[#.rot4d&, polytopeFaces] / normVertex * normFaceCenter//FullSimplify;
+        newCells = Map[#.rot4d&, polytopeCells, {2}] / normVertex * normFaceCenter//FullSimplify;
 
-    ints = Intersection[normalizedFaceCenters, newVertices, SameTest -> SameMatrix];
-    Print[Length/@{newVertices, normalizedFaceCenters, ints}];
+        AppendTo[componentVertices, newVertices];
+        AppendTo[componentEdges, newEdges];
+        AppendTo[componentFaces, newFaces];
+        AppendTo[componentCells, newCells];
+    ];
+
+    Print["number of components: " <> IntegerString[Length[componentVertices]] <> ". Each component contains: " <> IntegerString[Length[componentVertices[[1]]]] <> " vertices"];
+    allComponentVertices = Union[Flatten[N[componentVertices], 1], SameTest -> SameMatrix];
+    Print["all components done"];
+    ints = Intersection[N[faceCenters], N[allComponentVertices], SameTest -> SameMatrix];
+    Print[Length/@{allComponentVertices, faceCenters, ints}];
+
+    polytopeData["componentVertices"] = componentVertices;
+    polytopeData["componentEdges"] = componentEdges;
+    polytopeData["componentFaces"] = componentFaces;
+    polytopeData["componentCells"] = componentCells;
+
+    Save[polytopeFileName, polytopeData];
+    Print["Saved polytope component data to " <> polytopeFileName];
 ];
