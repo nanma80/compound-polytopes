@@ -244,6 +244,6 @@ of 3 16-cells inside a 24-cell. No difference in signature 1 or -1.
 For 343 (24-cell), the 96 edge centers are 96 face centers of the dual 24-cell. The compound 
 is as same as the face center compound of 24-cell. Signatures 1 and -1 are different.
 
-
+For 335 (600-cell). There is difference in signature 1 or -1.
 
 *)

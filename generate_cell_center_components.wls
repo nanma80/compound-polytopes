@@ -4,8 +4,8 @@ numericalValue = True;
 
 shapes = {
     "polytope_3_3_4"
-    (* "polytope_3_4_3_alt" *)
-    (* "polytope_3_3_5" *)
+    , "polytope_3_3_5"
+    (* , "polytope_3_4_3_alt" *)
     (* "polytope_3_3_3" *)
     (* , "polytope_3_4_3" *)
     (* "polytope_4_3_3" *)
@@ -83,7 +83,6 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
     polytopeFileName = FileNameJoin[{dataFolder, shape <> ".wl"}];
 
     If[!FileExistsQ[polytopeFileName],
-
         Print["Generating polytope data for " <> polytopeCellsFileName];
         polytopeCells = Get[polytopeCellsFileName];
         Print[polytopeCells//Length]; (* 24 *)
@@ -111,20 +110,20 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
     polytopeVertices = polytopeData["vertices"];
     polytopeCells = polytopeData["cells"];
 
-    faceCenters = Mean/@polytopeFaces;
-    normFaceCenter = Norm[faceCenters[[1]]];
+    cellCenters = Map[Mean[Mean[#]]&, polytopeCells]//Simplify;
+    normCellCenter = Norm[cellCenters[[1]]];
 
     vertex1 = SortBy[polytopeVertices, N[-#[[4]]]&][[1]];
     normVertex = Norm[vertex1];
-    vertex1 = vertex1/Norm[vertex1]*normFaceCenter//FullSimplify;
+    vertex1 = vertex1/Norm[vertex1]*normCellCenter//FullSimplify;
     Print["vertex1: "];
     Print[vertex1];
-    normalizedVertices = polytopeVertices/normVertex * normFaceCenter//FullSimplify;
+    normalizedVertices = polytopeVertices/normVertex * normCellCenter//FullSimplify;
 
     For[signature = 1, signature >= -1, signature = signature - 2,
         Print["signature = " <> ToString[signature]];
 
-        seedFaceCenters = {};
+        seedPoints = {};
         componentVertices = {};
         componentEdges = {};
         componentFaces = {};
@@ -132,47 +131,27 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
         otherVectors = IdentityMatrix[4];
 
         If[shape == "polytope_3_3_4",
-            seedFaceCenters = Select[faceCenters, #[[4]] == 0 && #[[3]] > 0&];
-        ];
-
-        If[shape == "polytope_3_4_3_alt",
-            seedFaceCenters = Select[faceCenters, #[[4]] == 4/3 && #[[3]] == 2/3 &];
+            seedPoints = cellCenters[[{1, 2}]];
         ];
 
         If[shape == "polytope_3_3_5",
-            seedFaceCenters = Select[faceCenters, Simplify[#[[4]]] == (1 + Sqrt[5])/2 && #[[1]] + #[[2]]*0.1 + #[[3]]*0.01 + #[[4]] * 0.001> 0 &]//Simplify;
+            seedPoints = cellCenters[[{1, 2, 3, 4, 5}]];
             otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0}};
         ];
 
-        If[shape == "polytope_3_3_3",
-            (* doesn't work *)
-            seedFaceCenters = faceCenters[[{1}]];
-        ];
+        Print["Number of seedPoints:"];
+        Print[seedPoints//Length];
 
-        If[shape == "polytope_4_3_3",
-            (* doesn't work *)
-            seedFaceCenters = faceCenters[[{3}]];
-        ];
-
-        If[shape == "polytope_5_3_3",
-            (* doesn't work *)
-            seedFaceCenters = faceCenters[[{1}]];
-            otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0.0}};
-        ];
-
-        (* Map[#[[4]]&, faceCenters]//Tally *)
-
-        Print["Number of seedFaceCenters:"];
-        Print[seedFaceCenters//Length];
-
-        For[seedIndex = 1, seedIndex <= Length[seedFaceCenters], seedIndex++,
+        For[seedIndex = 1, seedIndex <= Length[seedPoints], seedIndex++,
+            Print["seedIndex"];
             Print[seedIndex];
-            faceCenter1 = seedFaceCenters[[seedIndex]];
-            Print[faceCenter1];
-            If[shape == "polytope_3_3_5" && seedIndex == 9,
+            seedPoint = seedPoints[[seedIndex]];
+            Print[seedPoint];
+            If[shape == "polytope_3_3_5" && seedIndex == 5,
                 otherVectors = {{1, 0, 0, 0}, {0, 1, 0, 0}};
             ];
-            orth4dRaw = Orthogonalize[Join[{vertex1, faceCenter1}, otherVectors]]//Simplify;
+            Print["Orthogonalizing"];
+            orth4dRaw = Orthogonalize[Join[{vertex1, seedPoint}, otherVectors]]//Simplify;
             orth4d = Select[orth4dRaw, Norm[#] > epsilon&];
 
             If[Length[orth4d] < 4,
@@ -188,13 +167,13 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
             If[Det[orth4d] * signature < 0, orth4d = {orth4d[[1]], orth4d[[2]], orth4d[[4]], orth4d[[3]]}];
             Print["orth4d computed"];
 
-            theta = ArcCos[faceCenter1.vertex1/Norm[vertex1]/Norm[faceCenter1]];
+            theta = ArcCos[seedPoint.vertex1/Norm[vertex1]/Norm[seedPoint]];
             rot4d = FullSimplify[Transpose[orth4d].doubleRotation[-theta].orth4d];
 
-            newVertices = polytopeVertices.rot4d / normVertex * normFaceCenter//FullSimplify;
-            newEdges = Map[#.rot4d&, polytopeEdges] / normVertex * normFaceCenter//FullSimplify;
-            newFaces = Map[#.rot4d&, polytopeFaces] / normVertex * normFaceCenter//FullSimplify;
-            newCells = Map[#.rot4d&, polytopeCells, {2}] / normVertex * normFaceCenter//FullSimplify;
+            newVertices = polytopeVertices.rot4d / normVertex * normCellCenter//FullSimplify;
+            newEdges = Map[#.rot4d&, polytopeEdges] / normVertex * normCellCenter//FullSimplify;
+            newFaces = Map[#.rot4d&, polytopeFaces] / normVertex * normCellCenter//FullSimplify;
+            newCells = Map[#.rot4d&, polytopeCells, {2}] / normVertex * normCellCenter//FullSimplify;
 
             AppendTo[componentVertices, newVertices];
             AppendTo[componentEdges, newEdges];
@@ -209,32 +188,34 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
             Print["component vertices have overlaps"];
             Throw[componentOverlap];
         ];
-        ints = Intersection[N[faceCenters], N[allComponentVertices], SameTest -> SameMatrix];
-        Print[Length/@{allComponentVertices, faceCenters, ints}];
-        If[Length[ints] != Length[faceCenters] || Length[ints] != Length[allComponentVertices],
+        ints = Intersection[N[cellCenters], N[allComponentVertices], SameTest -> SameMatrix];
+        Print[Length/@{allComponentVertices, cellCenters, ints}];
+        If[Length[ints] != Length[cellCenters] || Length[ints] != Length[allComponentVertices],
             Throw[notAllTargetsCovered];
         ];
 
         signatureString = If[signature == 1, "1", "2"];
-        KeyDropFrom[polytopeData, {
-                "componentVertices", "componentEdges", "componentFaces", "componentCells",
-                "componentVertices1", "componentEdges1", "componentFaces1", "componentCells1",
-                "componentVertices2", "componentEdges2", "componentFaces2", "componentCells2"}];
-        polytopeData["faceComponentVertices" <> signatureString] = componentVertices;
-        polytopeData["faceComponentEdges" <> signatureString] = componentEdges;
-        polytopeData["faceComponentFaces" <> signatureString] = componentFaces;
-        polytopeData["faceComponentCells" <> signatureString] = componentCells;
+        polytopeData["cellComponentVertices" <> signatureString] = componentVertices;
+        polytopeData["cellComponentEdges" <> signatureString] = componentEdges;
+        polytopeData["cellComponentFaces" <> signatureString] = componentFaces;
+        polytopeData["cellComponentCells" <> signatureString] = componentCells;
     ];
-    (* DeleteFile[polytopeFileName]; *)
-    (* Save[polytopeFileName, polytopeData]; *)
-    (* Print["Saved polytope component data to " <> polytopeFileName]; *)
+    DeleteFile[polytopeFileName];
+    Save[polytopeFileName, polytopeData];
+    Print["Saved polytope component data to " <> polytopeFileName];
 ];
 
-(*
-For 334 (16-cell), there is difference in signature 1 or -1.
 
-For 343 (24-cell), Signatures 1 and -1 are the same
+(* Intersection[N[edgeCenters], N[componentVertices[[1]]], SameTest -> SameMatrix]//Length *)
+
+(* Intersection[N[componentVertices[[1]]], N[componentVertices[[1]]], SameTest -> SameMatrix]//Length *)
+
+(* Intersection[polytopeData["cellComponentVertices1"][[1]], polytopeData["cellComponentVertices2"][[2]]]//Length *)
+
+(*
+For 334 (16-cell). No difference in signature 1 or -1.
 
 For 335 (600-cell). There is difference in signature 1 or -1.
 
+333, 343: self dual. Can be seen as 1 component.
 *)
