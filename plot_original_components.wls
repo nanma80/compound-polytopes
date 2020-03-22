@@ -2,8 +2,8 @@
 
 shapes = {
     "polytope_3_3_4"
-    (* , "polytope_3_4_3_alt" *)
-    (* , "polytope_3_3_5" *)
+    , "polytope_3_4_3_alt"
+    , "polytope_3_3_5"
 };
 
 rangeFactor = 0.75;
@@ -90,10 +90,9 @@ For[showEdges = 0, showEdges <= 1, showEdges += 1,
         outputFolder = FileNameJoin[{imageFolder, shape}];
         If[!DirectoryQ[outputFolder], CreateDirectory[outputFolder]];
 
-
         (* original *)
         maxNorm = Norm[polytopeData["vertices"][[1,1]]];
-        thickness = maxNorm * 0.02; (* thicker than usual *)
+        thickness = maxNorm * 0.02;
         range = maxNorm * rangeFactor;
 
         originalGraphElements = getGraphElements[

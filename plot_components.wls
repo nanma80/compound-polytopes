@@ -2,8 +2,8 @@
 
 shapes = {
     "polytope_3_3_4"
-    (* , "polytope_3_4_3_alt" *)
-    (* , "polytope_3_3_5" *)
+    , "polytope_3_4_3_alt"
+    , "polytope_3_3_5"
 };
 
 rangeFactor = 0.75;
@@ -89,7 +89,6 @@ For[opacity = 0.0, opacity <= 1, opacity += 0.5,
 
         outputFolder = FileNameJoin[{imageFolder, shape}];
         If[!DirectoryQ[outputFolder], CreateDirectory[outputFolder]];
-
 
         (* original *)
         maxNorm = Norm[polytopeData["vertices"][[1,1]]];
