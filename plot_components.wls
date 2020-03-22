@@ -10,10 +10,10 @@ rangeFactor = 0.75;
 dataFolder = "data";
 imageFolder = "output";
 exportToPov = True;
-plotAllCells = True;
 imageSize = 150 * {4, 3};
 (*imageSize = {1000, 750};*)
 epsilon = 0.000001;
+includeChiral = False;
 
 Needs["POVRayRender`"];
 ConfigurePOVRayRender["POVRayPath" -> "C:\\Program Files\\POV-Ray\\v3.7\\bin\\pvengine64.exe"];
@@ -113,7 +113,7 @@ For[opacity = 0.0, opacity <= 1, opacity += 0.5,
         keys = Keys[polytopeData];
         For[keyIndex = 1, keyIndex <= Length[keys], keyIndex++,
             key = keys[[keyIndex]];
-            For[signature = 1, signature >= -1, signature = signature - 2,
+            For[signature = 1, signature >= If[includeChiral, -1, 1], signature = signature - 2,
                 signatureString = If[signature == 1, "1", "2"];
                 If[StringContainsQ[key, "ComponentVertices" <> signatureString],
                 (* If[StringContainsQ[key, "faceComponentVertices" <> signatureString]  && signatureString == "2", *)

@@ -2,18 +2,20 @@
 
 shapes = {
     "polytope_3_3_4"
-    , "polytope_3_4_3_alt"
-    , "polytope_3_3_5"
+    (* , "polytope_3_4_3_alt" *)
+    (* , "polytope_3_3_5" *)
 };
 
 rangeFactor = 0.75;
 dataFolder = "data";
 imageFolder = "output";
 exportToPov = True;
-plotAllCells = True;
+limit = 2;
 imageSize = 150 * {4, 3};
 (*imageSize = {1000, 750};*)
 epsilon = 0.000001;
+hasLimit = (limit != 0);
+includeChiral = False;
 
 Needs["POVRayRender`"];
 ConfigurePOVRayRender["POVRayPath" -> "C:\\Program Files\\POV-Ray\\v3.7\\bin\\pvengine64.exe"];
@@ -76,7 +78,7 @@ plotImage[graphElements_, range_, outputFileName_, imageSize_] := Module[
 projectionVector4D = {0, 0, 0, 1} + {0.1, 0.13, 0.61, 0.21} * 0.0001;
 projectionTo3D = getProjectionMatrix[projectionVector4D];
 
-For[showEdges = 0, showEdges <= 1, showEdges += 1,
+For[showEdges = If[hasLimit, 1, 0], showEdges <= 1, showEdges += 1,
     Print["showEdges: " <> IntegerString[showEdges]];
     For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex ++,
         shape = shapes[[shapeIndex]];
@@ -108,7 +110,7 @@ For[showEdges = 0, showEdges <= 1, showEdges += 1,
         keys = Keys[polytopeData];
         For[keyIndex = 1, keyIndex <= Length[keys], keyIndex++,
             key = keys[[keyIndex]];
-            For[signature = 1, signature >= -1, signature = signature - 2,
+            For[signature = 1, signature >= If[includeChiral, -1, 1], signature = signature - 2,
                 signatureString = If[signature == 1, "1", "2"];
                 If[StringContainsQ[key, "ComponentVertices" <> signatureString],
                 (* If[StringContainsQ[key, "faceComponentVertices" <> signatureString]  && signatureString == "2", *)
@@ -133,9 +135,11 @@ For[showEdges = 0, showEdges <= 1, showEdges += 1,
                             0
                         ];
                         AppendTo[allGraphElements, graphElements];
+                        If[hasLimit && cIndex == limit, Break[]];
                     ];
 
                     outputFileName = "original_" <> prefix <> "_" <> signatureString <> 
+                        If[hasLimit, "_limit_" <> IntegerString[limit], ""] <>
                         "_showEdges_" <> IntegerString[showEdges] <> 
                         "_" <> shape <> ".png";
                     outputFileName = FileNameJoin[{outputFolder, outputFileName}];
