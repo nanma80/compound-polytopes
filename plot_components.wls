@@ -1,9 +1,9 @@
 #!/usr/bin/env wolframscript
 
 shapes = {
-    "polytope_3_3_4"
-    (* , "polytope_3_4_3_alt" *)
-    (* , "polytope_3_3_5" *)
+    (* "polytope_3_3_4" *)
+    "polytope_3_4_3_alt"
+    , "polytope_3_3_5"
 };
 
 rangeFactor = 0.75;
@@ -11,7 +11,7 @@ dataFolder = "data";
 imageFolder = "output";
 exportToPov = True;
 plotAllCells = True;
-imageSize = {600, 450}; (* has to be 4:3 *)
+imageSize = 150 * {4, 3};
 (*imageSize = {1000, 750};*)
 
 Needs["POVRayRender`"];
@@ -69,6 +69,7 @@ projectionVector4D = {0, 0, 0, 1} + {0.1, 0.13, 0.61, 0.21} * 0.0001;
 projectionTo3D = getProjectionMatrix[projectionVector4D];
 
 For[opacity = 0.0, opacity <= 1, opacity += 0.5,
+    Print["opacity: " <> ToString[N[opacity]]];
     For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex ++,
         shape = shapes[[shapeIndex]];
         Print["shape: " <> shape];
