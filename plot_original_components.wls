@@ -76,8 +76,8 @@ plotImage[graphElements_, range_, outputFileName_, imageSize_] := Module[
 projectionVector4D = {0, 0, 0, 1} + {0.1, 0.13, 0.61, 0.21} * 0.0001;
 projectionTo3D = getProjectionMatrix[projectionVector4D];
 
-For[opacity = 0.0, opacity <= 1, opacity += 0.5,
-    Print["opacity: " <> ToString[N[opacity]]];
+For[showEdges = 0, showEdges <= 1, showEdges += 1,
+    Print["showEdges: " <> IntegerString[showEdges]];
     For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex ++,
         shape = shapes[[shapeIndex]];
         Print["shape: " <> shape];
@@ -93,22 +93,17 @@ For[opacity = 0.0, opacity <= 1, opacity += 0.5,
 
         (* original *)
         maxNorm = Norm[polytopeData["vertices"][[1,1]]];
-        thickness = maxNorm * 0.02;
+        thickness = maxNorm * 0.02; (* thicker than usual *)
         range = maxNorm * rangeFactor;
 
-        outputFileName = "original" <> 
-            "_op_" <> IntegerString[Round[opacity * 100]] <> 
-            "_" <> shape <> ".png";
-        outputFileName = FileNameJoin[{outputFolder, outputFileName}];
-        graphElements = getGraphElements[
+        originalGraphElements = getGraphElements[
                             polytopeData["vertices"],
                             polytopeData["edges"],
-                            polytopeData["faces"],
+                            {}, (* no faces *)
                             LightGray,
                             thickness,
-                            opacity
+                            0  (* original is wireframe *)
                         ];
-        plotImage[graphElements, range, outputFileName, imageSize];
 
         (* components *)
         keys = Keys[polytopeData];
@@ -124,24 +119,25 @@ For[opacity = 0.0, opacity <= 1, opacity += 0.5,
                     componentCount = Length[polytopeData[key]];
                     Print["componentCount: " <> IntegerString[componentCount]];
 
-                    maxNorm = Norm[polytopeData[key][[1,1]]];
-                    thickness = maxNorm * 0.02;
-                    range = maxNorm * rangeFactor;
                     allGraphElements = {};
+                    AppendTo[allGraphElements, originalGraphElements];
                     For[cIndex = 1, cIndex <= componentCount, cIndex++,
                         graphElements = getGraphElements[
                             polytopeData[prefix <> "Vertices" <> suffix][[cIndex]],
-                            polytopeData[prefix <> "Edges" <> suffix][[cIndex]],
-                            polytopeData[prefix <> "Faces" <> suffix][[cIndex]],
+                            If[showEdges == 1,
+                                polytopeData[prefix <> "Edges" <> suffix][[cIndex]],
+                                {}
+                            ], 
+                            {}, (* no faces *)
                             colors[[cIndex]],
                             thickness,
-                            opacity
+                            0
                         ];
                         AppendTo[allGraphElements, graphElements];
                     ];
 
-                    outputFileName = prefix <> "_" <> signatureString <> 
-                        "_op_" <> IntegerString[Round[opacity * 100]] <> 
+                    outputFileName = "original_" <> prefix <> "_" <> signatureString <> 
+                        "_showEdges_" <> IntegerString[showEdges] <> 
                         "_" <> shape <> ".png";
                     outputFileName = FileNameJoin[{outputFolder, outputFileName}];
                     plotImage[Flatten[allGraphElements, 1], range, outputFileName, imageSize];
