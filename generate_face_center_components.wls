@@ -233,8 +233,8 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
 (*
 For 334 (16-cell), there is difference in signature 1 or -1.
 
-For 343 (24-cell), Signatures 1 and -1 are the same
+For 343 (24-cell), there is difference in signature 1 or -1.
 
-For 335 (600-cell). There is difference in signature 1 or -1.
+For 335 (600-cell), there is difference in signature 1 or -1.
 
 *)
