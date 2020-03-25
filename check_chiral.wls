@@ -11,6 +11,7 @@ shapes = {
 epsilon = 1.0*^-5;
 dataFolder = "data";
 
+reflect[point_, mirror_] := FullSimplify[point - 2 * (point.mirror)/(mirror.mirror)*mirror];
 normalizedInnerProd[u_, v_] := u.v/Norm[u]/Norm[v];
 perspectiveProjection[point_, fullProjectionMatrix_, wDistance_ ] := projectToDirection[point, fullProjectionMatrix[[1;;3]]] / (1 + point.(fullProjectionMatrix[[4]])/wDistance);
 projectToDirection[vertex4d_, projectionMatrix_] := projectionMatrix.vertex4d;
@@ -121,8 +122,8 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
     keys = Keys[polytopeData];
     For[keyIndex = 1, keyIndex <= Length[keys], keyIndex++,
         key = keys[[keyIndex]];
-        If[StringContainsQ[key, "ComponentVertices1"],
-        (* If[StringContainsQ[key, "faceComponentVertices1"], *)
+        (* If[StringContainsQ[key, "ComponentVertices1"], *)
+        If[StringContainsQ[key, "faceComponentVertices1"],
             type = StringTake[key, 4];
             prefix = StringTake[key, 21];
             key1 = prefix <> "1";
@@ -134,27 +135,27 @@ For[shapeIndex = 1, shapeIndex <= Length[shapes], shapeIndex++,
             Print[getIntersectionMatrix[polytopeData[key1], polytopeData[key2]]];
 
             Print["negative mirror 4"];
-            Print[getIntersectionMatrix[polytopeData[key1], Map[negativeMirror4, polytopeData[key2], {2}]]];
+            Print[getIntersectionMatrix[polytopeData[key1], Simplify[Map[negativeMirror4, polytopeData[key2], {2}]]]];
 
             Print["swap mirror 34"];
-            Print[getIntersectionMatrix[polytopeData[key1], Map[swapMirror34, polytopeData[key2], {2}]]];
+            Print[getIntersectionMatrix[polytopeData[key1], Simplify[Map[swapMirror34, polytopeData[key2], {2}]]]];
 
             Print["swap mirror 12"];
-            Print[getIntersectionMatrix[polytopeData[key1], Map[#[[{2, 1, 3, 4}]]&, polytopeData[key2], {2}]]];
+            Print[getIntersectionMatrix[polytopeData[key1], Simplify[Map[#[[{2, 1, 3, 4}]]&, polytopeData[key2], {2}]]]];
 
             Print[];
         ];
     ];
 ];
 
+
 (*
 prototype:
 Print[Intersection[polytopeData["edgeComponentVertices1"][[1]], negativeMirror/@polytopeData["edgeComponentVertices2"][[1]]]//Length];
 
-
 For 16 and 24 cell, both negative mirror and swap mirror effectively map the chiral components to the same components.
 
-For 600-cell, negative mirror works for edge and cell centers, neither works for face centers. Probably the mirror axis required for 600-cell, face, is different.
+For 600-cell, negative mirror works for edge, face, and cell centers.
 
 It doesn't matter which direction to take negative. It doesn't appear to matter which pairs of 
 coordinates to swap.
