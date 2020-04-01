@@ -2,7 +2,7 @@
 
 shapes = {
     (* "polytope_3_3_4" *)
-    (* "polytope_3_4_3_alt" *)
+    (* , "polytope_3_4_3_alt" *)
     "polytope_3_3_5"
 };
 
@@ -33,7 +33,10 @@ getIndexBasedPolytopeData[cells_] := Module[
 	},
 	
 	Print["Converting " <> IntegerString[Length[cells]] <> " cells to index based."];
-	cellsGoldenField=Map[toGoldenField[#, lookupTable]&, cells, {4}];
+	possibleValues = Union[Flatten[cells], SameTest -> (Abs[N[#1]-N[#2]]<epsilon&)];
+	filteredTable = Intersection[lookupTable, Table[{N[v]}, {v, possibleValues}], SameTest -> (Abs[(#1[[1]] - #2[[1]])] < epsilon&)];
+
+	cellsGoldenField=Map[toGoldenField[#, filteredTable]&, cells, {4}];
 	Print["Mapped values to the golden ratio field"];
 
 	vertices = Union[Flatten[cellsGoldenField,2]];
@@ -81,7 +84,7 @@ For[i=1,i<=Length[shapes],i++,
 	inputData = Get[dataFileName];
 	(* Print[Keys[inputData]]; *)
 
-(* 	{cells, faces, edges, vertices, edgeComponentVertices1, edgeComponentEdges1, edgeComponentFaces1, edgeComponentCells1, edgeComponentVertices2, edgeComponentEdges2, edgeComponentFaces2, edgeComponentCells2, faceComponentVertices1, faceComponentEdges1, faceComponentFaces1, faceComponentCells1, faceComponentVertices2, faceComponentEdges2, faceComponentFaces2, faceComponentCells2, cellComponentVertices1, cellComponentEdges1, cellComponentFaces1, cellComponentCells1, cellComponentVertices2, cellComponentEdges2, cellComponentFaces2, cellComponentCells2} *)
+	(* 	{cells, faces, edges, vertices, edgeComponentVertices1, edgeComponentEdges1, edgeComponentFaces1, edgeComponentCells1, edgeComponentVertices2, edgeComponentEdges2, edgeComponentFaces2, edgeComponentCells2, faceComponentVertices1, faceComponentEdges1, faceComponentFaces1, faceComponentCells1, faceComponentVertices2, faceComponentEdges2, faceComponentFaces2, faceComponentCells2, cellComponentVertices1, cellComponentEdges1, cellComponentFaces1, cellComponentCells1, cellComponentVertices2, cellComponentEdges2, cellComponentFaces2, cellComponentCells2} *)
 
 	scalingFactor = 6;
 	allData = <|
