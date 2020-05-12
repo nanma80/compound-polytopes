@@ -107,9 +107,13 @@ polytopeFileName = FileNameJoin[{dataFolder, shape <> ".wl"}];
 polytopeData = Get[polytopeFileName];
 polytopeVertices = polytopeData["vertices"];
 
-baseVertices = Select[polytopeVertices, Simplify[normalizedInnerProd[polytopeVertices[[1]], #] + 1/4] == 0& ];
-base2Vertices = Select[baseVertices, Simplify[normalizedInnerProd[baseVertices[[1]], #] + 1/4] == 0& ];
-templateVertices = Join[ {polytopeVertices[[1]], baseVertices[[1]]}, base2Vertices ];
+seed1 = polytopeVertices[[600]];
+baseVertices = Select[polytopeVertices, Simplify[normalizedInnerProd[seed1, #] + 1/4] == 0& ];
+
+seed2 = baseVertices[[1]];
+base2Vertices = Select[baseVertices, Simplify[normalizedInnerProd[seed2, #] + 1/4] == 0& ];
+
+templateVertices = Join[ {seed1, seed2}, base2Vertices ];
 
 Print["Coordinates of the first 5-cell:"];
 Print[templateVertices];
@@ -138,7 +142,7 @@ overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -
 For[i = 0, i < 100 && countStart != Length[cells], i++,
     countStart = Length[cells];
 
-    For[j = 1, j<=Length[mirrorCombinations], j++,
+    For[j = 1, j <= Length[mirrorCombinations], j++,
         mirrorCombination = mirrorCombinations[[j]];
         innerCount = Length[cells];
         For[k = 1, k <= 12, k++,
@@ -156,13 +160,17 @@ For[i = 0, i < 100 && countStart != Length[cells], i++,
 
             If[Length[cells] == innerCount, Break[]];
             innerCount = Length[cells];
+            If[Length[cells] == 120, Break[]];
         ];
+        If[Length[cells] == 120, Break[]];
     ];
 
     Print["Generated " <> IntegerString[Length[cells]] <> " cells so far."];
+    If[Length[cells] == 120, Break[]];
 ];
 
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
+Print[5 * Length[cells]];
 
 (* northPole = {0, 0, 0, 1};
 otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0}};
