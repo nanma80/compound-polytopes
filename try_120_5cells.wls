@@ -5,6 +5,9 @@ numericalValue = True;
 epsilon = 1.0*^-5;
 dataFolder = "data";
 
+
+reflect[point_, mirror_] := FullSimplify[point - 2 * (point.mirror)/(mirror.mirror)*mirror];
+doubleReflect[point_, mirror1_, mirror2_] := reflect[reflect[point, mirror1], mirror2];
 normalizedInnerProd[u_, v_] := u.v/Norm[u]/Norm[v];
 perspectiveProjection[point_, fullProjectionMatrix_, wDistance_ ] := projectToDirection[point, fullProjectionMatrix[[1;;3]]] / (1 + point.(fullProjectionMatrix[[4]])/wDistance);
 projectToDirection[vertex4d_, projectionMatrix_] := projectionMatrix.vertex4d;
@@ -108,14 +111,60 @@ baseVertices = Select[polytopeVertices, Simplify[normalizedInnerProd[polytopeVer
 base2Vertices = Select[baseVertices, Simplify[normalizedInnerProd[baseVertices[[1]], #] + 1/4] == 0& ];
 templateVertices = Join[ {polytopeVertices[[1]], baseVertices[[1]]}, base2Vertices ];
 
+Print["Coordinates of the first 5-cell:"];
 Print[templateVertices];
-Print[templateVertices//N];
 
 distanceTable = Table[ Apply[normalizedInnerProd, templateVertices[[{i, j} ]]]//Simplify, {i, 5}, {j, 5}];
 
 Print[distanceTable];
 
-northPole = {0, 0, 0, 1};
+phi = (1 + Sqrt[5])/2;
+
+mirrors = {
+            {0, 1, 0, 0 },
+            {1, phi, -1/phi, 0  },
+            {1, -phi, 1/phi, 0  },
+            {1, 0, phi, -1/phi  }
+        };
+
+cell1 = templateVertices;
+
+cells = {cell1};
+countStart = -1;
+mirrorCombinations = Subsets[Range[4], {2}];
+
+overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] > 0;
+
+For[i = 0, i < 100 && countStart != Length[cells], i++,
+    countStart = Length[cells];
+
+    For[j = 1, j<=Length[mirrorCombinations], j++,
+        mirrorCombination = mirrorCombinations[[j]];
+        innerCount = Length[cells];
+        For[k = 1, k <= 12, k++,
+            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[1]]]], mirrors[[mirrorCombination[[2]] ]] ]&, cells, {2}];
+            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+            cells = Join[cells, nonOverlappingNewCells];
+
+            Print[cells//Length];
+
+            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[2]]]], mirrors[[mirrorCombination[[1]] ]] ]&, cells, {2}];
+            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+            cells = Join[cells, nonOverlappingNewCells];
+
+            Print[cells//Length];
+
+            If[Length[cells] == innerCount, Break[]];
+            innerCount = Length[cells];
+        ];
+    ];
+
+    Print["Generated " <> IntegerString[Length[cells]] <> " cells so far."];
+];
+
+Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
+
+(* northPole = {0, 0, 0, 1};
 otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0}};
 orth4dRaw = Orthogonalize[Join[{templateVertices[[1]], northPole}, otherVectors]]//Simplify;
 
@@ -126,6 +175,7 @@ rot4d = FullSimplify[Transpose[orth4d].doubleRotation[-theta].orth4d];
 
 centeredTemplate = templateVertices.rot4d //FullSimplify;
 Print[centeredTemplate];
+ *)
 
 (* targetIndex = 1;
 
