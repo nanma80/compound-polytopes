@@ -172,33 +172,9 @@ For[i = 0, i < 100 && countStart != Length[cells], i++,
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
 Print[5 * Length[cells]];
 
-(* northPole = {0, 0, 0, 1};
-otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0}};
-orth4dRaw = Orthogonalize[Join[{templateVertices[[1]], northPole}, otherVectors]]//Simplify;
+outputFileName = FileNameJoin[{dataFolder, "compound_120_5_cells_componentwise_vertices.wl"}];
 
-orth4d = Select[orth4dRaw, Norm[#] > epsilon&];
+If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
+Save[outputFileName, cells];
+Print["Saved polytope component data to " <> outputFileName];
 
-theta = ArcCos[templateVertices[[1]].northPole/Norm[templateVertices[[1]]]/Norm[northPole]];
-rot4d = FullSimplify[Transpose[orth4d].doubleRotation[-theta].orth4d];
-
-centeredTemplate = templateVertices.rot4d //FullSimplify;
-Print[centeredTemplate];
- *)
-
-(* targetIndex = 1;
-
-target = polytopeVertices[[targetIndex]];
-
-otherVectors = {{1, 0, 0, 0}, {0, 0, 1, 0}};
-
-orth4dRaw = Orthogonalize[Join[{centeredTemplate[[1]], target}, otherVectors]]//Simplify;
-
-orth4d = Select[orth4dRaw, Norm[#] > epsilon&];
-
-theta = ArcCos[centeredTemplate[[1]].target/Norm[target]/Norm[centeredTemplate[[1]]]];
-rot4d = FullSimplify[Transpose[orth4d].doubleRotation[-theta].orth4d];
-
-newVertices = centeredTemplate.rot4d //FullSimplify;
-
-Intersection[newVertices, polytopeVertices, SameTest -> sameVertex]
- *)
