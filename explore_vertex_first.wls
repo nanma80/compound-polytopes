@@ -121,3 +121,18 @@ Print[partial];
  {14, 249, 24}, {15, 273, 24}, {16, 327, 54}, {17, 351, 24}, {18, 375, 24}, {19, 403, 28},
  {20, 427, 24}, {21, 439, 12}, {22, 463, 24}, {23, 495, 32}, {24, 519, 24}, {25, 543, 24},
  {26, 547, 4}, {27, 559, 12}, {28, 583, 24}, {29, 595, 12}, {30, 599, 4}, {31, 600, 1}}
+
+baseVertices = Select[polytopeVertices, Simplify[normalizedInnerProd[seed1, #] + 1/4] == 0& ];
+
+compounds = {};
+
+For[seed2Index = 1, seed2Index <= Length[baseVertices], seed2Index++,
+    seed2 = baseVertices[[seed2Index]];
+    base2Vertices = Select[baseVertices, Simplify[normalizedInnerProd[seed2, #] + 1/4] == 0& ];
+    templateVertices = Join[ {seed1, seed2}, base2Vertices ];
+    AppendTo[compounds, templateVertices];
+];
+
+same5Cell[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] == 5;
+
+compounds = Union[compounds, SameTest -> same5Cell];
