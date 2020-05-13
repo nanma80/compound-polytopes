@@ -1,0 +1,123 @@
+#!/usr/bin/env wolframscript
+
+numericalValue = True;
+
+epsilon = 1.0*^-5;
+dataFolder = "data";
+
+
+reflect[point_, mirror_] := FullSimplify[point - 2 * (point.mirror)/(mirror.mirror)*mirror];
+doubleReflect[point_, mirror1_, mirror2_] := reflect[reflect[point, mirror1], mirror2];
+normalizedInnerProd[u_, v_] := u.v/Norm[u]/Norm[v];
+perspectiveProjection[point_, fullProjectionMatrix_, wDistance_ ] := projectToDirection[point, fullProjectionMatrix[[1;;3]]] / (1 + point.(fullProjectionMatrix[[4]])/wDistance);
+projectToDirection[vertex4d_, projectionMatrix_] := projectionMatrix.vertex4d;
+getEdgesFromFace[face_] := Table[{face[[i+1]], face[[Mod[i+1, Length[face]] + 1]]}, {i, 0, Length[face] - 1}];
+sameVertex[point1_, point2_] := point1 == point2;
+cubeVertices[dimension_] := 2 * Map[IntegerDigits[#, 2][[2;;dimension+1]]&, Table[k, {k, 2^dimension, 2 * 2^dimension - 1}]] - 1;
+allPlusMinus[v_] := Union[Map[(v #)&, cubeVertices[Length[v]]]];
+(* SameMatrix[m1_, m2_] := ( m1 == m2 ) || (Max[Max[N[Abs[m1 - m2]]]] < epsilon); *)
+SameMatrix[m1_, m2_] := (Max[Max[N[Abs[m1 - m2]]]] < epsilon);
+sameCenter[edge1_, edge2_] := SameMatrix[Total[edge1], Total[edge2]];
+SameTotal[edge1_, edge2_] := SameMatrix[Total[edge1], Total[edge2]];
+getQString[q_, separator_] := If[IntegerQ[q], IntegerString[q], IntegerString[Numerator[q]] <> separator <> IntegerString[Denominator[q]]];
+getFileName[symbol_] := "complex_polytope_" <> IntegerString[symbol[[1]]] <> "_" <> getQString[symbol[[2]], "over"] <> "_" <> IntegerString[symbol[[3]]];
+getShapeName[symbol_] := IntegerString[symbol[[1]]] <> "{" <> getQString[symbol[[2]], "/"] <> "}" <> IntegerString[symbol[[3]]];
+maxNorm[direction_, realVertices_] := Max[Map[(#.direction)^2/direction.direction&, realVertices]];
+getReal[complexVector_] := Flatten[ Map[{Re[#], Im[#]}&, complexVector] ];
+snap[value_, knownValues_] := Module[
+    {epsilon, snapValue, knownIndex, knownValue},
+    epsilon = 0.00001;
+    For[knownIndex = 1, knownIndex <= Length[knownValues], knownIndex++,
+        knownValue = knownValues[[knownIndex]];
+        For[offset = -4, offset <= 4, offset ++,
+            If[Abs[value - knownValue - offset] < epsilon, Return[knownValue + offset, Module] ];
+            If[Abs[value + knownValue + offset] < epsilon, Return[-knownValue - offset, Module] ]
+        ];
+    ];
+    value
+];
+
+nVector[r1_, p1_] := Module[{n1Matrix, n11, n12, epsilon}, 
+    epsilon = 0.000001;
+    n1Matrix = (r1 - IdentityMatrix[2])/(Exp[2 Pi I / p1] - 1);
+    n11 = Sqrt[Re[n1Matrix[[1]][[1]]]];
+    n12 = n1Matrix[[1]][[2]]/n11;
+    If[Abs[Im[n12]] < epsilon, n12 = Re[n12]];
+    {n11, n12}
+];
+
+getParts[edge1_, numParts_] := Module[
+    {alpha, betaStep},
+    alpha = ArcCos[edge1[[1]].edge1[[2]]/Norm[edge1[[1]]]^2];
+    betaStep = alpha/numParts;
+    Table[(Sin[alpha - k * betaStep] edge1[[1]] + Sin[k * betaStep] edge1[[2]])/Sin[alpha], {k, 1, numParts - 1}]
+];
+
+doubleRotation[theta_] := ArrayFlatten[{
+    {RotationMatrix[theta], 0},
+    {0, RotationMatrix[theta]}
+}];
+
+isVertexFirst[vertices_] := Module[
+    {center},
+    center = Select[vertices, Abs[N[#[[1]]]] + Abs[N[#[[2]]]] + Abs[N[#[[3]]]] < epsilon&];
+    Length[center] > 0
+];
+
+isEdgeFaceFirst[edges_] := Module[
+    {centers},
+    centers = Mean/@edges;
+    Length[Select[centers, Abs[N[#[[1]]]] + Abs[N[#[[2]]]] + Abs[N[#[[3]]]] < epsilon&]]>0
+];
+
+isCellFirst[cells_] := Module[
+    {centers},
+    centers = Map[Mean[Mean[#]]&, cells];
+    Length[Select[centers, Abs[N[#[[1]]]] + Abs[N[#[[2]]]] + Abs[N[#[[3]]]] < epsilon&]]>0
+];
+
+getCenterType[vertices_, edges_, faces_, cells_] := 
+    If[isVertexFirst[vertices],
+        "Vertex",
+        If[isEdgeFaceFirst[edges],
+            "Edge",
+            If[isEdgeFaceFirst[faces],
+                "Face",
+                If[isCellFirst[cells],
+                    "Cell",
+                    "None"
+                ]
+            ]
+        ]
+    ];
+
+getInnerProds[points_] := Module[
+    {fInnerProds},
+    fInnerProds = {};
+    For[fIndex = 2, fIndex <= Length[points], fIndex++,
+        AppendTo[fInnerProds, normalizedInnerProd[points[[1]], points[[fIndex]]]];
+    ];
+    Union[fInnerProds, SameTest -> (Abs[N[#1] - N[#2]] < epsilon&)]
+];
+
+shape = "polytope_5_3_3";
+Print["shape: " <> shape];
+polytopeFileName = FileNameJoin[{dataFolder, shape <> ".wl"}];
+
+polytopeData = Get[polytopeFileName];
+polytopeVertices = polytopeData["vertices"];
+
+seed1 = polytopeVertices[[600]];
+
+innerProds = Map[normalizedInnerProd[seed1, #]&, polytopeVertices]//FullSimplify;
+tally = Tally[innerProds];
+tally = SortBy[tally, N[#[[1]]]&];
+tallyCount = Map[#[[2]]&, tally];
+partial = Table[ {limit, Sum[tallyCount[[i]], {i, 1, limit}], tallyCount[[limit]]}, {limit, 1, 31}];
+Print[partial];
+
+{{1, 1, 1}, {2, 5, 4}, {3, 17, 12}, {4, 41, 24}, {5, 53, 12}, {6, 57, 4}, {7, 81, 24},
+ {8, 105, 24}, {9, 137, 32}, {10, 161, 24}, {11, 173, 12}, {12, 197, 24}, {13, 225, 28},
+ {14, 249, 24}, {15, 273, 24}, {16, 327, 54}, {17, 351, 24}, {18, 375, 24}, {19, 403, 28},
+ {20, 427, 24}, {21, 439, 12}, {22, 463, 24}, {23, 495, 32}, {24, 519, 24}, {25, 543, 24},
+ {26, 547, 4}, {27, 559, 12}, {28, 583, 24}, {29, 595, 12}, {30, 599, 4}, {31, 600, 1}}
