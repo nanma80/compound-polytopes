@@ -41,39 +41,54 @@ possibleValues = Union[Flatten[inputData], SameTest -> (Abs[N[#1]-N[#2]]<epsilon
 filteredTable = Intersection[lookupTable, Table[{N[v]}, {v, possibleValues}], SameTest -> (Abs[(#1[[1]] - #2[[1]])] < epsilon&)];
 
 cellsGoldenField=Map[toGoldenField[#, filteredTable]&, inputData, {3}];
-
-vertices = {};
-edges = {};
-faces = {};
-cells = {};
-components = {};
-
-(* prototype *)
-edge1 = Subsets[Range[5]-1, {2}];
-face1 = Subsets[Range[5]-1, {3}];
-cell1 = Table[ Select[Range[Length[face1]], MemberQ[face1[[#]], k] == False& ] - 1, {k, 0, 4}];
-component1 = {Range[5] - 1};
-
-For[i = 1, i <= Length[cellsGoldenField], i++,
-	verticesBeforeCount = Length[vertices];
-	edgesBeforeCount = Length[edges];
-	facesBeforeCount = Length[faces];
-	cellsBeforeCount = Length[cells];
-
-	vertices = Join[vertices, cellsGoldenField[[i]]];
-	edges = Join[edges, edge1 + verticesBeforeCount];
-	faces = Join[faces, face1 + verticesBeforeCount];
-	cells = Join[cells, cell1 + facesBeforeCount];
-	components = Join[components, component1 + cellsBeforeCount];
+Print["Mapped input data to golden field"];
+get5Cells[vertices_] := Module[
+	{},
+	cells = {};
+	For[i=1, i<=Length[vertices], i++,
+		verticesInCell = vertices[[Complement[Range[5], {i}]]];
+		facesInCell = Subsets[verticesInCell, {3}];
+		AppendTo[cells, facesInCell];
+	];
+	cells
 ];
+
+overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] == Length[array1];
+
+components = Map[get5Cells, cellsGoldenField];
+Print["Constructed 5-cells"];
+vertices = Union[Flatten[components, 3]];
+verticesMap = getMap[vertices];
+Print["Mapped vertices"];
+faces = Union[Flatten[components, 2], SameTest -> overlapping];
+edgesPerFace = Map[getEdgesFromFace, faces];
+
+edges = Union[Flatten[edgesPerFace, 1], SameTest -> overlapping];
+edgeIndices = Map[Sort[Map[verticesMap, #]]&, edges];
+Print["Mapped edges"];
+
+faceByVertexIndices = Map[Sort[Map[verticesMap, #]]&, faces];
+facesMap = getMap[faceByVertexIndices];
+Print["Mapped faces"];
+
+cells = Union[Flatten[components, 1], SameTest -> overlapping];
+cellsByVertexIndices = Map[Sort, Map[verticesMap, cells, {3}], {2}];
+cellsByFaceIndices = Map[Sort, Map[facesMap, cellsByVertexIndices, {2}]];
+cellsMap = getMap[cellsByFaceIndices];
+Print["Mapped cells"];
+
+componentsByVertexIndices = Map[Sort, Map[verticesMap, components, {4}], {3}];
+componentsByFaceIndices = Map[Sort, Map[facesMap, componentsByVertexIndices, {3}], {2}];
+componentsByCellIndices = Map[Sort, Map[cellsMap, componentsByFaceIndices, {2}], {1}];
+Print["Mapped components"];
 
 allData = 
 	<|
 		"vertices" -> vertices,
-		"edges" -> edges,
-		"faces" -> faces,
-		"cells" -> cells,
-		"components" -> components
+		"edges" -> edgeIndices - 1,
+		"faces" -> faceByVertexIndices - 1,
+		"cells" -> cellsByVertexIndices - 1,
+		"components" -> componentsByCellIndices - 1
 	|>;
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName] ];
