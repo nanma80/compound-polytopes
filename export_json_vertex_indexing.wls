@@ -91,7 +91,7 @@ allData =
 		"vertices" -> vertices,
 		"edges" -> edgeIndices - 1,
 		"faces" -> faceByVertexIndices - 1,
-		"cells" -> cellsByVertexIndices - 1,
+		"cells" -> cellsByFaceIndices - 1,
 		"components" -> componentsByCellIndices - 1
 	|>;
 
