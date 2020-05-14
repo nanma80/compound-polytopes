@@ -146,22 +146,38 @@ mirrors = {
 
 cells = compounds;
 countStart = -1;
+mirrorCombinations = Subsets[Range[4], {2}];
 
 overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] > 4;
 
-For[i = 0, i < 100 && countStart != Length[cells], i++,
+For[i = 0, i < 0 && countStart != Length[cells], i++,
     countStart = Length[cells];
 
-    For[j = 1, j <= Length[mirrors], j++,
-        mirror = mirrors[[j]];
-        newCells = Map[reflect[#, mirror]&, cells, {2}];
-        nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
-        cells = Join[cells, nonOverlappingNewCells];
-        Print[cells//Length];
+    For[j = 1, j <= Length[mirrorCombinations], j++,
+        mirrorCombination = mirrorCombinations[[j]];
+        innerCount = Length[cells];
+        For[k = 1, k <= 12, k++,
+            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[1]]]], mirrors[[mirrorCombination[[2]] ]] ]&, cells, {2}];
+            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+            cells = Join[cells, nonOverlappingNewCells];
+
+            Print[cells//Length];
+
+            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[2]]]], mirrors[[mirrorCombination[[1]] ]] ]&, cells, {2}];
+            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+            cells = Join[cells, nonOverlappingNewCells];
+
+            Print[cells//Length];
+
+            If[Length[cells] == innerCount, Break[]];
+            innerCount = Length[cells];
+            If[Length[cells] == 840, Break[]];
+        ];
+        If[Length[cells] == 840, Break[]];
     ];
 
     Print["Generated " <> IntegerString[Length[cells]] <> " cells so far."];
-    (* If[Length[cells] == 120, Break[]]; *)
+    If[Length[cells] == 840, Break[]];
 ];
 
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
