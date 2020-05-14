@@ -56,14 +56,16 @@ get5Cells[vertices_] := Module[
 overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] == Length[array1];
 
 components = Map[get5Cells, cellsGoldenField];
-Print["Constructed 5-cells"];
+Print["Constructed 5-cells. Component count: " <> IntegerString[Length[components]]];
 vertices = Union[Flatten[components, 3]];
 verticesMap = getMap[vertices];
-Print["Mapped vertices"];
+Print["Mapped vertices. Vertex count: " <> IntegerString[Length[vertices]]];
 faces = Union[Flatten[components, 2], SameTest -> overlapping];
+Print["Flattened faces. Face count: " <> IntegerString[Length[faces]]];
 edgesPerFace = Map[getEdgesFromFace, faces];
-
+Print["Created edgesPerFace"];
 edges = Union[Flatten[edgesPerFace, 1], SameTest -> overlapping];
+Print["Flattened edges. Edge count: " <> IntegerString[Length[edges]]];
 edgeIndices = Map[Sort[Map[verticesMap, #]]&, edges];
 Print["Mapped edges"];
 
@@ -72,6 +74,8 @@ facesMap = getMap[faceByVertexIndices];
 Print["Mapped faces"];
 
 cells = Union[Flatten[components, 1], SameTest -> overlapping];
+Print["Flattened cells. Cell count: " <> IntegerString[Length[cells]]];
+
 cellsByVertexIndices = Map[Sort, Map[verticesMap, cells, {3}], {2}];
 cellsByFaceIndices = Map[Sort, Map[facesMap, cellsByVertexIndices, {2}]];
 cellsMap = getMap[cellsByFaceIndices];
