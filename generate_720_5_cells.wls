@@ -119,13 +119,13 @@ For[seed2Index = 1, seed2Index <= Length[baseVertices], seed2Index++,
     AppendTo[compounds, templateVertices];
 ];
 
+
 same5Cell[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] == 5;
 
 compounds = Union[compounds, SameTest -> same5Cell];
 
-(* Print["Coordinates of the first 5-cell:"];
-Print[templateVertices];
- *)
+compounds = compounds[[{2}]];
+
 Print[Length[compounds]];
 
 For[i = 1, i<=Length[compounds], i++,
@@ -146,44 +146,28 @@ mirrors = {
 
 cells = compounds;
 countStart = -1;
-mirrorCombinations = Subsets[Range[4], {2}];
+(* mirrorCombinations = Subsets[Range[4], {2}]; *)
 
 overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] > 4;
 
 For[i = 0, i < 100 && countStart != Length[cells], i++,
     countStart = Length[cells];
 
-    For[j = 1, j <= Length[mirrorCombinations], j++,
-        mirrorCombination = mirrorCombinations[[j]];
-        innerCount = Length[cells];
-        For[k = 1, k <= 12, k++,
-            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[1]]]], mirrors[[mirrorCombination[[2]] ]] ]&, cells, {2}];
-            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
-            cells = Join[cells, nonOverlappingNewCells];
+    For[j = 1, j <= Length[mirrors], j++,
 
-            Print[cells//Length];
-
-            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[2]]]], mirrors[[mirrorCombination[[1]] ]] ]&, cells, {2}];
-            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
-            cells = Join[cells, nonOverlappingNewCells];
-
-            Print[cells//Length];
-
-            If[Length[cells] == innerCount, Break[]];
-            innerCount = Length[cells];
-            If[Length[cells] == 840, Break[]];
-        ];
-        If[Length[cells] == 840, Break[]];
+        newCells = Map[reflect[#, mirrors[[j]] ]&, cells, {2}];
+        nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+        cells = Join[cells, nonOverlappingNewCells];
+        Print[cells//Length];
     ];
 
     Print["Generated " <> IntegerString[Length[cells]] <> " cells so far."];
-    If[Length[cells] == 840, Break[]];
 ];
 
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
 Print[5 * Length[cells]];
 
-outputFileName = FileNameJoin[{dataFolder, "compound_840_5_cells_componentwise_vertices.wl"}];
+outputFileName = FileNameJoin[{dataFolder, "compound_720_5_cells_componentwise_vertices.wl"}];
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
 Save[outputFileName, cells];
