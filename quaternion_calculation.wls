@@ -4,14 +4,18 @@
 
 phi = (1 + Sqrt[5])/2;
 vertexJson = {{1,1},{-1,1},{-1,1},{-1,1}};
-vertexQ = Apply[Quaternion, vertexJson.{1, phi}];
+vertexJsonRotated = vertexJson[[{2,3,4,1}]];
+vertexQ = Apply[Quaternion, vertexJsonRotated.{1, phi}];
 
 target = Quaternion[0, 0, 0, 1] * 8;
 factor = Divide[target, vertexQ];
-Print[factor];
+Print["product"];
 Print[factor ** vertexQ];
+
+Print["factor"];
+Print[factor];
 Print[factor//N];
 
+Print["original"];
 Print[vertexQ//N];
 
-Print[Quaternion[0.618, 0.618, -0.618, 2.618] ** Quaternion[2.618, 0.618, 0.618, 0.618]]
