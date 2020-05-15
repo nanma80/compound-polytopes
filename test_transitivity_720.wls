@@ -135,6 +135,8 @@ For[i = 1, i<=Length[compounds], i++,
 ];
 
 edge12 = compounds[[1]][[{1, 2}]];
+face123 = compounds[[1]][[{1, 2, 3}]];
+cell1234 = compounds[[1]][[{1, 2, 3, 4}]];
 
 phi = (1 + Sqrt[5])/2;
 
@@ -146,9 +148,10 @@ mirrors = {
         };
 
 (* cells = compounds; *)
-cells = { edge12 }; start from an edge
+(* cells = { edge12 }; *)
+cells = { face123 };
+(* cells = { cell1234 }; *)
 
-Print[edge12];
 Print[cells];
 
 countStart = -1;
@@ -167,13 +170,12 @@ For[i = 0, i < 100 && countStart != Length[cells], i++,
         Print[cells//Length];
     ];
 
-    Print["Generated " <> IntegerString[Length[cells]] <> " cells so far."];
+    Print["Generated " <> IntegerString[Length[cells]] <> " elements so far."];
 ];
 
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
-Print[5 * Length[cells]];
 
-outputFileName = FileNameJoin[{dataFolder, "compound_720_5_cells_edges.wl"}];
+outputFileName = FileNameJoin[{dataFolder, "compound_720_5_cells_faces.wl"}];
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
 Save[outputFileName, cells];
@@ -184,9 +186,9 @@ Print["Saved polytope component data to " <> outputFileName];
 Compound of 720 5-cells:
 
 600 vertices
-7200 edges
-7200 faces
-3600 cells
+7200 edges, one edge can generate all 7200
+7200 faces, one face can generate all 7200
+3600 cells, one cell can generate all 3600
 720 components
 
  *)
