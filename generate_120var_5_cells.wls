@@ -71,8 +71,6 @@ icosianLists = polytope600cellVertices/2;
 
 quaternionRotation[leftList_, rightList_] := List @@ ( (Quaternion @@ leftList) ** (Quaternion @@ rightList) );
 
-quaternionRotation[icosianLists[[3]], compounds[[1, 1]]]
-
 cellsA = 
     Table[
         quaternionRotation[compounds[[1, j]], icosianLists[[i]]],
@@ -88,11 +86,13 @@ If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
 Save[outputFileName, cellsA];
 Print["Saved polytope component data to " <> outputFileName];
 
-swappedIcosianLists = Map[{#[[1]], #[[2]], #[[3]], #[[4]]}&, icosianLists];
+(* swappedIcosianLists = Map[{#[[1]], #[[2]], #[[4]], #[[3]]}&, icosianLists]; *)
 
 cellsB = 
     Table[
-        quaternionRotation[swappedIcosianLists[[i]], compounds[[1, j]]],
+        (* quaternionRotation[swappedIcosianLists[[i]], compounds[[1, j]]], *)
+        quaternionRotation[icosianLists[[i]], compounds[[1, j]]],
+        (* quaternionRotation[compounds[[1, j]], swappedIcosianLists[[i]]], *)
         {i, 1, Length[icosianLists]},
         {j, 1, 5}
     ];
@@ -106,5 +106,9 @@ Save[outputFileName, cellsB];
 Print["Saved polytope component data to " <> outputFileName];
 
 Intersection[cellsA, cellsB, SameTest -> same5Cell]//Length
+(* no swapping, overlap == 20 *)
+
+(* Intersection[cellsA, Map[{#[[1]], #[[2]], #[[4]], #[[3]]}&, cellsA, {2}], SameTest -> same5Cell]//Length *)
+
 
 
