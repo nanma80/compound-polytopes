@@ -19,7 +19,7 @@ toGoldenField[value_, lookupTable_] :=
 
 getMap[list_] := Association[Table[{list[[k]] -> k}, {k, 1, Length[list]}]];
 
-phi = GoldenRatio;
+phi = (1+ Sqrt[5])/2;
 numberLimit = {3, 3};
 lookupTable = Flatten[Table[
 	{N[i + j * GoldenRatio], {i, j}},
@@ -43,20 +43,28 @@ Print["Reading data for " <> shapeOriginal <> " from " <> dataFileOriginalName];
 
 inputDataOriginal = Get[dataFileOriginalName];
 
-(* 600 *)
-(* Intersection[Flatten[inputDataVar, 1], Flatten[inputDataOriginal, 1], SameTest -> sameVertex]//Length *)
+leftMatrix[v_] := {
+    {v[[1]], -v[[2]], -v[[3]], -v[[4]]},
+    {v[[2]], v[[1]], -v[[4]], v[[3]]},
+    {v[[3]], v[[4]], v[[1]], -v[[2]]},
+    {v[[4]], -v[[3]], v[[2]], v[[1]]}
+};
 
-var1 = inputDataVar[[1]];
-original1 = inputDataOriginal[[1]];
+rightMatrix[v_] := {
+    {v[[1]], -v[[2]], -v[[3]], -v[[4]]},
+    {v[[2]], v[[1]], v[[4]], -v[[3]]},
+    {v[[3]], -v[[4]], v[[1]], v[[2]]},
+    {v[[4]], v[[3]], -v[[2]], v[[1]]}
+};
 
-rot4d = Inverse[var1[[Range[4]]]].original1[[{2,1,3,4}]]//Simplify;
+vector = {0, 1, 0, 0};
+leftMatrix[vector]
+Eigenvalues[leftMatrix[vector]]
+Eigenvectors[leftMatrix[vector]]
 
-Intersection[var1.rot4d//Simplify, Flatten[inputDataOriginal, 1], SameTest -> sameVertex]//Length
-(* 5 *)
+(* sample value of 600 cell vertex, from 335 data*)
+(* {phi, 1, 0, 1/phi} *)
 
-rotatedVar = Map[#.rot4d&, inputDataVar]//Simplify;
+(* cell center from 533, compatible *)
+(* {1, phi, 1/phi, 0} *)
 
-Intersection[Flatten[rotatedVar, 1], Flatten[inputDataOriginal, 1], SameTest -> sameVertex]//Length
-(* 100 *)
-(* If we force the first 5-cell in var to align with that in original, only 20 5-cells will
-have 120-cell vertices *)
