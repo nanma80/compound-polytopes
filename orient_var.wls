@@ -68,3 +68,52 @@ Eigenvectors[leftMatrix[vector]]
 (* cell center from 533, compatible *)
 (* {1, phi, 1/phi, 0} *)
 
+seed1 = {(3 + Sqrt[5])/2, (-1 + Sqrt[5])/2, (-1 + Sqrt[5])/2, (-1 + Sqrt[5])/2};
+(* seed1//N                                                                                        
+Out[41]= {2.61803, 0.618034, 0.618034, 0.618034}
+{(3 + Sqrt[5])/2, (-1 + Sqrt[5])/2, (-1 + Sqrt[5])/2, (-1 + Sqrt[5])/2}
+ *)
+
+component1 = Select[ inputDataVar, Length[Intersection[#, {seed1}]] > 0&][[1]];
+
+(*
+{{2.61803, 0.618034, 0.618034, 0.618034}, {0., -1., -2.61803, 0.381966},
+{-1.61803, 1.61803, 0.381966, 1.61803}, {-0.618034, -2.23607, 1.61803, 0.},
+{-0.381966, 1., 0., -2.61803}}
+
+{{(3 + Sqrt[5])/2, (-1 + Sqrt[5])/2, (-1 + Sqrt[5])/2, (-1 + Sqrt[5])/2},
+ {0, -1, (-3 - Sqrt[5])/2, (3 - Sqrt[5])/2}, {(-1 - Sqrt[5])/2, (1 + Sqrt[5])/2, (3 - Sqrt[5])/2,
+  (1 + Sqrt[5])/2}, {(1 - Sqrt[5])/2, -Sqrt[5], (1 + Sqrt[5])/2, 0},
+ {(-3 + Sqrt[5])/2, 1, 0, (-3 - Sqrt[5])/2}}
+
+ *)
+
+(* classical 5-cell *)
+component0 = {{(3 + Sqrt[5])/2, (-1 + Sqrt[5])/2, (-1 + Sqrt[5])/2, (-1 + Sqrt[5])/2},
+ {-1, 2, (-1 - Sqrt[5])/2, (-1 + Sqrt[5])/2}, {-1, (-1 - Sqrt[5])/2, (-1 + Sqrt[5])/2, 2},
+ {-1, (-1 + Sqrt[5])/2, 2, (-1 - Sqrt[5])/2}, {(3 - Sqrt[5])/2, (-1 - Sqrt[5])/2, (-1 - Sqrt[5])/2,
+  (-1 - Sqrt[5])/2}};
+  
+edgeCenters0 = Map[Total[component0[[#]]]&, Subsets[{2,3,4,5}, {2}]]//Simplify;
+
+edgeCenters1 = Map[Total[component1[[#]]]&, Subsets[{2,3,4,5}, {2}]]//Simplify;
+
+intersectionEdgeCenters = Intersection[edgeCenters0, edgeCenters1];
+
+(* {2,4}  {3,5} of edgeCenters1 *)
+
+(* axisPoints = Join[{seed1}, intersectionEdgeCenters]; *)
+(* rank == 2 *)
+
+rotatedPlane = Orthogonalize[Join[intersectionEdgeCenters, IdentityMatrix[4][[{1,2}]]]][[{3, 4}]]//FullSimplify;
+
+flip4d = RotationMatrix[Pi, rotatedPlane]//Simplify;
+
+flipData = Map[#.flip4d &, inputDataVar]//Simplify;
+
+Print[ Intersection[ component0.flip4d//Simplify, component0, SameTest -> sameVertex]//Length ];
+
+same5Cell[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] == 5;
+
+Print[ Intersection[ flipData, inputDataVar , SameTest -> same5Cell]//Length ];
+
