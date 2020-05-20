@@ -117,3 +117,21 @@ same5Cell[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> 
 
 Print[ Intersection[ flipData, inputDataVar , SameTest -> same5Cell]//Length ];
 
+int1 = intersectionEdgeCenters[[1]];
+
+edge0Indices = Select[Subsets[{2,3,4,5}, {2}], Total[component0[[#]]] == int1&][[1]];
+edge1Indices = Select[Subsets[{2,3,4,5}, {2}], Total[component1[[#]]] == int1&][[1]];
+
+edge0 = component0[[edge0Indices]];
+edge1 = component1[[edge1Indices]];
+vector0 = Subtract@@edge0//Simplify;
+vector1 = Subtract@@edge1//Simplify;
+
+getCos[v1_, v2_] := Dot[v1, v2]/Norm[v1]/Norm[v2]//Simplify;
+
+(* 1/Sqrt[5] *)
+Print[getCos[vector0, vector1]]
+Print[getCos[rotatedPlane.vector0//Simplify, rotatedPlane.vector1//Simplify]]
+
+Print[ArcCos[getCos[vector0, vector1]]/Pi*180.]
+(* 63.4349 degrees, ArcCos[1/Sqrt[5]] *)
