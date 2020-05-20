@@ -150,13 +150,13 @@ For[i = 0, i < 100 && countStart != Length[cells], i++,
         innerCount = Length[cells];
         For[k = 1, k <= 12, k++,
             newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[1]]]], mirrors[[mirrorCombination[[2]] ]] ]&, cells, {2}];
-            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> same5Cell];
             cells = Join[cells, nonOverlappingNewCells];
 
             Print[cells//Length];
 
             newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[2]]]], mirrors[[mirrorCombination[[1]] ]] ]&, cells, {2}];
-            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> same5Cell];
             cells = Join[cells, nonOverlappingNewCells];
 
             Print[cells//Length];
