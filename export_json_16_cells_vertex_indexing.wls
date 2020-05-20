@@ -36,7 +36,7 @@ Print["Reading data for " <> shape <> " from " <> dataFileName];
 inputData = Get[dataFileName];
 
 
-Print["Converting " <> IntegerString[Length[inputData]] <> " cells to index based."];
+Print["Converting " <> IntegerString[Length[inputData]] <> " components to index based."];
 possibleValues = Union[Flatten[inputData], SameTest -> (Abs[N[#1]-N[#2]]<epsilon&)];
 filteredTable = Intersection[lookupTable, Table[{N[v]}, {v, possibleValues}], SameTest -> (Abs[(#1[[1]] - #2[[1]])] < epsilon&)];
 
