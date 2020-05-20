@@ -123,20 +123,15 @@ For[seed2Index = 1, seed2Index <= Length[baseVertices], seed2Index++,
 same5Cell[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] == Length[array1];
 
 compounds = Union[compounds, SameTest -> same5Cell];
-(* length == 9, from each vertex *)
+(* length == 9, from a common vertex *)
 (* 600 * 9 / 8 == 675 *)
 
-(* seed2 = baseVertices[[1]];
-base2Vertices = Select[baseVertices, Simplify[normalizedInnerProd[seed2, #] + 1/4] == 0& ];
+outputFileName = FileNameJoin[{dataFolder, "compound_seeds_16_cells_componentwise_vertices.wl"}];
 
-templateVertices = Join[ {seed1, seed2}, base2Vertices ];
+If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
+Save[outputFileName, compounds];
+Print["Saved polytope component data to " <> outputFileName];
 
-Print["Coordinates of the first 5-cell:"];
-Print[templateVertices];
-
-distanceTable = Table[ Apply[normalizedInnerProd, templateVertices[[{i, j} ]]]//Simplify, {i, 5}, {j, 5}];
-
-Print[distanceTable];
 
 phi = (1 + Sqrt[5])/2;
 
@@ -147,9 +142,7 @@ mirrors = {
             {1, 0, phi, -1/phi  }
         };
 
-cell1 = templateVertices;
-
-cells = {cell1};
+cells = {compounds[[9]]};
 countStart = -1;
 mirrorCombinations = Subsets[Range[4], {2}];
 
@@ -158,7 +151,7 @@ overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -
 For[i = 0, i < 100 && countStart != Length[cells], i++,
     countStart = Length[cells];
 
-    For[j = 1, j <= Length[mirrorCombinations], j++,
+    (* For[j = 1, j <= Length[mirrorCombinations], j++,
         mirrorCombination = mirrorCombinations[[j]];
         innerCount = Length[cells];
         For[k = 1, k <= 12, k++,
@@ -176,22 +169,28 @@ For[i = 0, i < 100 && countStart != Length[cells], i++,
 
             If[Length[cells] == innerCount, Break[]];
             innerCount = Length[cells];
-            If[Length[cells] == 120, Break[]];
+            If[Length[cells] == 600, Break[]];
         ];
-        If[Length[cells] == 120, Break[]];
+        If[Length[cells] == 600, Break[]];
+    ]; *)
+
+    For[j = 1, j <= Length[mirrors], j++,
+
+        newCells = Map[reflect[#, mirrors[[j]] ]&, cells, {2}];
+        nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+        cells = Join[cells, nonOverlappingNewCells];
+        Print[cells//Length];
     ];
 
-    Print["Generated " <> IntegerString[Length[cells]] <> " cells so far."];
-    If[Length[cells] == 120, Break[]];
+    Print["Generated " <> IntegerString[Length[cells]] <> " components so far."];
+    If[Length[cells] == 600, Break[]];
 ];
 
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
-Print[5 * Length[cells]];
 
-outputFileName = FileNameJoin[{dataFolder, "compound_120_5_cells_componentwise_vertices.wl"}];
+outputFileName = FileNameJoin[{dataFolder, "compound_75_16_cells_componentwise_vertices.wl"}];
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
 Save[outputFileName, cells];
 Print["Saved polytope component data to " <> outputFileName];
 
- *)
