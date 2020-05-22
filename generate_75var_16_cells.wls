@@ -73,9 +73,54 @@ cellsA =
     ];
 
 cellsA = Union[cellsA, SameTest -> same5Cell];
-
+Print[Length[cellsA]];
 Print[ Intersection[Flatten[cellsA, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
 
+
+phi = (1+Sqrt[5])/2;
+
+p = -{phi, -1, 1/phi, 0}/2;
+p = -{-1, phi, 1/phi, 0}/2;
+cp = -p;
+
+cp = quaternionRotation[cp, -p];
+cp = quaternionRotation[cp, -p];
+cp = quaternionRotation[cp, -p];
+cp = quaternionRotation[cp, -p];
+cp = quaternionRotation[cp, -p];
+
+(* q = -{-1/phi, -1, -phi, 0}/2;
+q = -{-1, -1/phi, -phi, 0}/2;
+cp = -q;
+ *)
+(* cpQuat = Quaternion @@ cp; *)
+cellsAp = 
+    Table[
+        quaternionRotation[cp, quaternionRotation[compounds[[1, j]], icosianLists[[i]]]],
+        {i, 1, Length[icosianLists]},
+        {j, 1, 8}
+    ];
+
+Print[Length[cellsAp]];
+cellsAp = Union[cellsAp, SameTest -> same5Cell];
+Print[Length[cellsAp]];
+Print[ Intersection[Flatten[cellsAp, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
+Union[cellsA, cellsAp, SameTest -> same5Cell]//Length
+Intersection[cellsA, cellsAp, SameTest -> same5Cell]//Length
+
+
+Intersection[Flatten[cellsA, 1], polytopeVertices, SameTest -> sameVertex]//Length
+
+(* unmatchedVertices = Complement[polytopeVertices, Flatten[cellsA, 1], SameTest -> sameVertex]; *)
+
+(* compound600Data = Get[FileNameJoin[{dataFolder, "compound_600_16_cells_componentwise_vertices.wl"}]];
+candidatesFrom600 = Select[compound600Data, Length[Intersection[unmatchedVertices, #, SameTest -> sameVertex]] == Length[#] &];
+candidatesFrom600//Length
+
+compound300Data = Get[FileNameJoin[{dataFolder, "compound_300_16_cells_componentwise_vertices.wl"}]];
+candidatesFrom300 = Select[compound300Data, Length[Intersection[unmatchedVertices, #, SameTest -> sameVertex]] == Length[#] &];
+candidatesFrom300//Length
+ *)
 outputFileName = FileNameJoin[{dataFolder, "compound_75var_a_16_cells_componentwise_vertices.wl"}];
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
