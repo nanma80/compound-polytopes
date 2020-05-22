@@ -146,5 +146,7 @@ Face count: 2400
 Cell count: 1200
 Component count: 75
 
+crop command:
+mogrify -crop 1164x1164+493+0 *.png
 
  *)
