@@ -43,6 +43,24 @@ Print["Reading data for " <> shapeOriginal <> " from " <> dataFileOriginalName];
 
 inputDataOriginal = Get[dataFileOriginalName];
 
+rot4d = Inverse[inputDataVar[[1, {1, 2, 3, 4}]]].inputDataOriginal[[1, {1, 2, 3, 4}]]//Simplify;
+
+inputDataVar[[1]].rot4d//Simplify
+
+inputDataOriginal[[1]]//N
+
+getEdges[vertices_] := Map[Apply[Subtract, #]&, Subsets[vertices, {2}]]//Simplify;
+
+vertices = inputDataOriginal[[1]];
+
+allEdgesOriginal = Union[Map[getEdges, inputDataOriginal]//Simplify];
+allEdgesVar = Union[Map[getEdges, inputDataVar]//Simplify];
+rotatedVar = Map[#.rot4d&, inputDataVar]//Simplify;
+allEdgesRotatedVar = Union[Map[getEdges, rotatedVar]//Simplify];
+
+
+getEdges[rotatedVar[[1]]]
+
 leftMatrix[v_] := {
     {v[[1]], -v[[2]], -v[[3]], -v[[4]]},
     {v[[2]], v[[1]], -v[[4]], v[[3]]},
@@ -108,6 +126,11 @@ intersectionEdgeCenters = Intersection[edgeCenters0, edgeCenters1];
 rotatedPlane = Orthogonalize[Join[intersectionEdgeCenters, IdentityMatrix[4][[{1,2}]]]][[{3, 4}]]//FullSimplify;
 
 flip4d = RotationMatrix[Pi, rotatedPlane]//Simplify;
+
+rot4d2 = RotationMatrix[ArcCos[1/Sqrt[5]], rotatedPlane]//Simplify;
+
+rotatedVar2 = Map[#.rot4d2&, inputDataVar]//Simplify;
+allEdgesRotatedVar2 = Union[Map[getEdges, rotatedVar2]//Simplify];
 
 flipData = Map[#.flip4d &, inputDataVar]//Simplify;
 
