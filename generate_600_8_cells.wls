@@ -77,7 +77,7 @@ mirrors = {
         };
 
 (* 1: original 75 *)
-cells = {compounds[[1]]};
+cells = {compounds[[2]]};
 countStart = -1;
 mirrorCombinations = Subsets[Range[4], {2}];
 
@@ -122,7 +122,7 @@ For[i = 0, i < 100 && countStart != Length[cells], i++,
 
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
 
-outputFileName = FileNameJoin[{dataFolder, "compound_75_8_cells_componentwise_vertices.wl"}];
+outputFileName = FileNameJoin[{dataFolder, "compound_600_8_cells_componentwise_vertices.wl"}];
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
 Save[outputFileName, cells];

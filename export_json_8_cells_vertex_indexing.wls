@@ -2,7 +2,8 @@
 
 dataFolder = "data";
 epsilon = 0.0000001;
-shape = "compound_seeds_8_cells";
+shape = "compound_600_8_cells";
+swapDimensions = False;
 
 projectTo3d[vertex4d_] := {vertex4d[[1]], vertex4d[[2]], vertex4d[[3]]};
 reflect[point_, mirror_] := FullSimplify[point - 2 * (point.mirror)/(mirror.mirror)*mirror];
@@ -29,7 +30,7 @@ lookupTable = Flatten[Table[
 ], 1];
 
 dataFileName = FileNameJoin[{dataFolder, shape <> "_componentwise_vertices.wl"}];
-outputFileName = FileNameJoin[{dataFolder, "json", shape <> "_vertex_indexing.json"}];
+outputFileName = FileNameJoin[{dataFolder, "json", shape <> If[swapDimensions, "_swap", ""] <> "_vertex_indexing.json"}];
 
 Print["Reading data for " <> shape <> " from " <> dataFileName];
 
@@ -53,8 +54,6 @@ get5Cells[vertices_] := Module[
 	cells
 ];
 
-
-signs = Map[#[[{2,3,4,5}]]&, IntegerDigits[Range[2^4]+2^4-1, 2]]*2-1;
 goldenMultiply[x_, y_] := {
     x[[1]] * y[[1]] + x[[2]] * y[[2]],
     x[[1]] * y[[2]] + x[[2]] * y[[1]] + x[[2]] * y[[2]]
@@ -99,6 +98,8 @@ get8Cells[vertices_] := Module[
 
 
 overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] == Length[array1];
+swap[v_] := v[[{1, 2, 4, 3}]];
+If[swapDimensions, cellsGoldenField =  Map[swap, cellsGoldenField, {2}]];
 
 components = Map[get8Cells, cellsGoldenField];
 Print["Constructed 8-cells. Component count: " <> IntegerString[Length[components]]];
@@ -114,19 +115,20 @@ Print["Flattened edges. Edge count: " <> IntegerString[Length[edges]]];
 edgeIndices = Map[Sort[Map[verticesMap, #]]&, edges];
 Print["Mapped edges"];
 
-faceByVertexIndices = Map[Sort[Map[verticesMap, #]]&, faces];
+faceByVertexIndices = Map[Map[verticesMap, #]&, faces];
+(* faceByVertexIndices = Map[Sort[Map[verticesMap, #]]&, faces]; *)
 facesMap = getMap[faceByVertexIndices];
 Print["Mapped faces"];
 
 cells = Union[Flatten[components, 1], SameTest -> overlapping];
 Print["Flattened cells. Cell count: " <> IntegerString[Length[cells]]];
 
-cellsByVertexIndices = Map[Sort, Map[verticesMap, cells, {3}], {2}];
+cellsByVertexIndices = Map[verticesMap, cells, {3}];
 cellsByFaceIndices = Map[Sort, Map[facesMap, cellsByVertexIndices, {2}]];
 cellsMap = getMap[cellsByFaceIndices];
 Print["Mapped cells"];
 
-componentsByVertexIndices = Map[Sort, Map[verticesMap, components, {4}], {3}];
+componentsByVertexIndices = Map[verticesMap, components, {4}];
 componentsByFaceIndices = Map[Sort, Map[facesMap, componentsByVertexIndices, {3}], {2}];
 componentsByCellIndices = Map[Sort, Map[cellsMap, componentsByFaceIndices, {2}], {1}];
 Print["Mapped components"];
@@ -154,7 +156,21 @@ Print["Component count: " <> IntegerString[Length[components]]];
 
 quaternion to import seeds: [1+phi, -1+phi, 1-phi, -1+phi]
 
+compound_seeds_8_cells_vertex_indexing.json
+Vertex count: 120
+Edge count: 496
+Face count: 432
+Cell count: 144
+Component count: 18
+
+compound_75_8_cells_vertex_indexing.json
+Vertex count: 600
+Edge count: 2400
+Face count: 1800
+Cell count: 600
+Component count: 75
+
 crop command:
-mogrify -crop 1164x1164+493+0 *.png
+mogrify -crop 1164x1164+493+0 compound_75_8_cells_cell_first.png
 
  *)
