@@ -2,7 +2,7 @@
 
 dataFolder = "data";
 epsilon = 0.0000001;
-shape = "compound_75var_a_8_cells";
+shape = "compound_675_8_cells";
 swapDimensions = False;
 
 projectTo3d[vertex4d_] := {vertex4d[[1]], vertex4d[[2]], vertex4d[[3]]};
@@ -195,6 +195,13 @@ Edge count: 2400
 Face count: 1800
 Cell count: 600
 Component count: 75
+
+compound_675_8_cells_vertex_indexing.json
+Vertex count: 600
+Edge count: 9600
+Face count: 16200
+Cell count: 5400
+Component count: 675
 
 crop command:
 mogrify -crop 1164x1164+493+0 *.png
