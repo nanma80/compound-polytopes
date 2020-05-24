@@ -87,45 +87,41 @@ overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -
 For[i = 0, i < 100 && countStart != Length[cells], i++,
     countStart = Length[cells];
 
-    (* For[j = 1, j <= Length[mirrorCombinations], j++,
+    For[j = 1, j <= Length[mirrorCombinations], j++,
         mirrorCombination = mirrorCombinations[[j]];
         innerCount = Length[cells];
         For[k = 1, k <= 12, k++,
             newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[1]]]], mirrors[[mirrorCombination[[2]] ]] ]&, cells, {2}];
-            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> sameSet];
             cells = Join[cells, nonOverlappingNewCells];
 
             Print[cells//Length];
 
-            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[2]]]], mirrors[[mirrorCombination[[1]] ]] ]&, cells, {2}];
-            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
+(*             newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[2]]]], mirrors[[mirrorCombination[[1]] ]] ]&, cells, {2}];
+            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> sameSet];
             cells = Join[cells, nonOverlappingNewCells];
 
             Print[cells//Length];
-
+ *)
             If[Length[cells] == innerCount, Break[]];
             innerCount = Length[cells];
-            If[Length[cells] == 600, Break[]];
         ];
-        If[Length[cells] == 600, Break[]];
-    ]; *)
+    ];
 
-    For[j = 1, j <= Length[mirrors], j++,
+(*     For[j = 1, j <= Length[mirrors], j++,
         newCells = Map[reflect[#, mirrors[[j]] ]&, cells, {2}];
         nonOverlappingNewCells = Complement[newCells, cells, SameTest -> sameSet];
         cells = Join[cells, nonOverlappingNewCells];
         Print[cells//Length];
     ];
-
+ *)
     Print["Generated " <> IntegerString[Length[cells]] <> " components so far."];
-    If[Length[cells] == 600, Break[]];
 ];
 
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
 
-outputFileName = FileNameJoin[{dataFolder, "compound_600_8_cells_componentwise_vertices.wl"}];
+outputFileName = FileNameJoin[{dataFolder, "compound_300_8_cells_componentwise_vertices.wl"}];
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
 Save[outputFileName, cells];
 Print["Saved polytope component data to " <> outputFileName];
-

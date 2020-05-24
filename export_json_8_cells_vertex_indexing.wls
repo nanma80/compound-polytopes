@@ -2,7 +2,7 @@
 
 dataFolder = "data";
 epsilon = 0.0000001;
-shape = "compound_75_8_cells";
+shape = "compound_75var_a_8_cells";
 swapDimensions = False;
 
 projectTo3d[vertex4d_] := {vertex4d[[1]], vertex4d[[2]], vertex4d[[3]]};
@@ -169,6 +169,27 @@ Cell count: 144
 Component count: 18
 
 compound_75_8_cells_vertex_indexing.json
+Vertex count: 600
+Edge count: 2400
+Face count: 1800
+Cell count: 600
+Component count: 75
+
+compound_600_8_cells_vertex_indexing.json
+Vertex count: 600
+Edge count: 9600
+Face count: 14400
+Cell count: 4800
+Component count: 600
+
+compound_300_8_cells_vertex_indexing.json
+Vertex count: 600
+Edge count: 6000
+Face count: 7200
+Cell count: 2400
+Component count: 300
+
+compound_75var_a_8_cells_vertex_indexing.json
 Vertex count: 600
 Edge count: 2400
 Face count: 1800

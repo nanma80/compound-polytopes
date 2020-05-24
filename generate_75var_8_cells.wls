@@ -5,6 +5,7 @@ numericalValue = True;
 epsilon = 1.0*^-5;
 dataFolder = "data";
 
+<< Quaternions`
 
 reflect[point_, mirror_] := FullSimplify[point - 2 * (point.mirror)/(mirror.mirror)*mirror];
 doubleReflect[point_, mirror1_, mirror2_] := reflect[reflect[point, mirror1], mirror2];
@@ -24,12 +25,19 @@ getShapeName[symbol_] := IntegerString[symbol[[1]]] <> "{" <> getQString[symbol[
 maxNorm[direction_, realVertices_] := Max[Map[(#.direction)^2/direction.direction&, realVertices]];
 getReal[complexVector_] := Flatten[ Map[{Re[#], Im[#]}&, complexVector] ];
 
-shape = "polytope_5_3_3";
-Print["Loading data from " <> shape];
-polytopeFileName = FileNameJoin[{dataFolder, shape <> ".wl"}];
+shape120cell = "polytope_5_3_3";
+Print["shape: " <> shape120cell];
+polytope120cellFileName = FileNameJoin[{dataFolder, shape120cell <> ".wl"}];
 
-polytopeData = Get[polytopeFileName];
-polytopeVertices = polytopeData["vertices"];
+polytope120cellData = Get[polytope120cellFileName];
+polytopeVertices = polytope120cellData["vertices"];
+
+shape600cell = "polytope_3_3_5";
+polytope600cellFileName = FileNameJoin[{dataFolder, shape600cell <> ".wl"}];
+
+polytope600cellData = Get[polytope600cellFileName];
+polytope600cellVertices = polytope600cellData["vertices"];
+Print["Loaded 600-cell data"];
 
 seed1 = polytopeVertices[[600]];
 baseVertices = Select[polytopeVertices, Simplify[normalizedInnerProd[seed1, #]] == 1/2 & ];
@@ -43,6 +51,7 @@ orthogonalIndices =
         && Simplify[baseVertices[[#[[2]]]].baseVertices[[#[[4]]]]] == 0
         && Simplify[baseVertices[[#[[3]]]].baseVertices[[#[[4]]]]] == 0 &
     ];
+
 
 compounds = {};
 
@@ -58,74 +67,39 @@ sameSet[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sa
 compounds = Union[compounds, SameTest -> sameSet];
 (* length == 18 *)
 
-(* outputFileName = FileNameJoin[{dataFolder, "compound_seeds_8_cells_componentwise_vertices.wl"}];
-
-If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
-Save[outputFileName, compounds];
-Print["Saved polytope component data to " <> outputFileName];
- *)
-
-(* verified until here *)
-
-phi = (1 + Sqrt[5])/2;
-
-mirrors = {
-            {0, 1, 0, 0 },
-            {1, phi, -1/phi, 0  },
-            {1, -phi, 1/phi, 0  },
-            {1, 0, phi, -1/phi  }
-        };
-
 (* 1: original 75 *)
 (* 2: 600 *)
-cells = {compounds[[2]]};
-countStart = -1;
-mirrorCombinations = Subsets[Range[4], {2}];
+compounds = compounds[[{2}]];
 
-overlapping[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> sameVertex] ] > 0;
+icosianLists = polytope600cellVertices/2;
 
-For[i = 0, i < 100 && countStart != Length[cells], i++,
-    countStart = Length[cells];
+quaternionRotation[leftList_, rightList_] := List @@ ( (Quaternion @@ leftList) ** (Quaternion @@ rightList) );
 
-    (* For[j = 1, j <= Length[mirrorCombinations], j++,
-        mirrorCombination = mirrorCombinations[[j]];
-        innerCount = Length[cells];
-        For[k = 1, k <= 12, k++,
-            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[1]]]], mirrors[[mirrorCombination[[2]] ]] ]&, cells, {2}];
-            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
-            cells = Join[cells, nonOverlappingNewCells];
+icosianIndex = 73;
 
-            Print[cells//Length];
-
-            newCells = Map[doubleReflect[#, mirrors[[mirrorCombination[[2]]]], mirrors[[mirrorCombination[[1]] ]] ]&, cells, {2}];
-            nonOverlappingNewCells = Complement[newCells, cells, SameTest -> overlapping];
-            cells = Join[cells, nonOverlappingNewCells];
-
-            Print[cells//Length];
-
-            If[Length[cells] == innerCount, Break[]];
-            innerCount = Length[cells];
-            If[Length[cells] == 600, Break[]];
+cellsA = {};
+q = icosianLists[[icosianIndex]];
+(* Print[q]; *)
+left = {1, 0, 0, 0};
+For[leftPower = 0, leftPower <= 4, leftPower++,
+    cells = 
+        Table[
+            quaternionRotation[left, quaternionRotation[compounds[[1, j]], icosianLists[[i]]]],
+            {i, 1, Length[icosianLists]},
+            {j, 1, 16}
         ];
-        If[Length[cells] == 600, Break[]];
-    ]; *)
 
-    For[j = 1, j <= Length[mirrors], j++,
-        newCells = Map[reflect[#, mirrors[[j]] ]&, cells, {2}];
-        nonOverlappingNewCells = Complement[newCells, cells, SameTest -> sameSet];
-        cells = Join[cells, nonOverlappingNewCells];
-        Print[cells//Length];
-    ];
+    cellsA = Union[cellsA, cells, SameTest -> sameSet];
+    Print[ {
+        Length[cellsA],
+        Intersection[Flatten[cellsA, 1], polytopeVertices, SameTest -> sameVertex]//Length
+    } ];
 
-    Print["Generated " <> IntegerString[Length[cells]] <> " components so far."];
-    If[Length[cells] == 600, Break[]];
+    left = quaternionRotation[left, q];
 ];
 
-Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
-
-outputFileName = FileNameJoin[{dataFolder, "compound_600_8_cells_componentwise_vertices.wl"}];
+outputFileName = FileNameJoin[{dataFolder, "compound_75var_a_8_cells_componentwise_vertices.wl"}];
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
-Save[outputFileName, cells];
+Save[outputFileName, cellsA];
 Print["Saved polytope component data to " <> outputFileName];
-
