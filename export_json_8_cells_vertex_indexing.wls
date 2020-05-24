@@ -2,7 +2,7 @@
 
 dataFolder = "data";
 epsilon = 0.0000001;
-shape = "compound_600_8_cells";
+shape = "compound_75_8_cells";
 swapDimensions = False;
 
 projectTo3d[vertex4d_] := {vertex4d[[1]], vertex4d[[2]], vertex4d[[3]]};
@@ -115,20 +115,25 @@ Print["Flattened edges. Edge count: " <> IntegerString[Length[edges]]];
 edgeIndices = Map[Sort[Map[verticesMap, #]]&, edges];
 Print["Mapped edges"];
 
-faceByVertexIndices = Map[Map[verticesMap, #]&, faces];
-(* faceByVertexIndices = Map[Sort[Map[verticesMap, #]]&, faces]; *)
+MinRotation[list_] := 
+	SortBy[{
+			RotateLeft[list, Position[list, Min[list]][[1,1]]-1],
+			RotateLeft[Reverse[list], Position[Reverse[list], Min[Reverse[list]]][[1,1]]-1]
+	}, #[[2]]&][[1]];
+
+faceByVertexIndices = Map[MinRotation[Map[verticesMap, #]]&, faces];
 facesMap = getMap[faceByVertexIndices];
 Print["Mapped faces"];
 
 cells = Union[Flatten[components, 1], SameTest -> overlapping];
 Print["Flattened cells. Cell count: " <> IntegerString[Length[cells]]];
 
-cellsByVertexIndices = Map[verticesMap, cells, {3}];
+cellsByVertexIndices = Map[MinRotation, Map[verticesMap, cells, {3}], {2}];
 cellsByFaceIndices = Map[Sort, Map[facesMap, cellsByVertexIndices, {2}]];
 cellsMap = getMap[cellsByFaceIndices];
 Print["Mapped cells"];
 
-componentsByVertexIndices = Map[verticesMap, components, {4}];
+componentsByVertexIndices = Map[MinRotation, Map[verticesMap, components, {4}], {3}];
 componentsByFaceIndices = Map[Sort, Map[facesMap, componentsByVertexIndices, {3}], {2}];
 componentsByCellIndices = Map[Sort, Map[cellsMap, componentsByFaceIndices, {2}], {1}];
 Print["Mapped components"];
@@ -171,6 +176,6 @@ Cell count: 600
 Component count: 75
 
 crop command:
-mogrify -crop 1164x1164+493+0 compound_75_8_cells_cell_first.png
+mogrify -crop 1164x1164+493+0 *.png
 
  *)
