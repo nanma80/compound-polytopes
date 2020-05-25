@@ -43,7 +43,7 @@ filteredTable = Intersection[lookupTable, Table[{N[v]}, {v, possibleValues}], Sa
 cellsGoldenField=Map[toGoldenField[#, filteredTable]&, inputData, {3}];
 Print["Mapped input data to golden field"];
 
-signs = Map[#[[{2,3,4,5}]]&, IntegerDigits[Range[2^4]+2^4-1, 2]]*2-1;
+signs = Map[#[[{2,3,4}]]&, IntegerDigits[Range[2^3]+2^3-1, 2]]*2-1;
 goldenMultiply[x_, y_] := {
     x[[1]] * y[[1]] + x[[2]] * y[[2]],
     x[[1]] * y[[2]] + x[[2]] * y[[1]] + x[[2]] * y[[2]]
@@ -65,30 +65,73 @@ get16Cells[vertices_] := Module[
 	cells
 ];
 
+getFacesInOctahedralCell[octahedralVertices_] := Module[
+	{positiveVertices, signIndex, face},
+	faces = {};
+	center = Mean[octahedralVertices];
+	relativeVertices = Map[# - center &, octahedralVertices];
+	positiveVertices = Select[relativeVertices, Map[toReal, #].{1, 0.0001, 0.00000001, 0.000000000001} > 0&];
+
+	For[signIndex = 1, signIndex <= 2^3, signIndex++,
+		face = Table[positiveVertices[[k]] * signs[[signIndex]][[k]] + center, {k, 3}];
+		AppendTo[faces, face];
+	];
+	faces
+];
+
+
 get24Cells[vertices_] := Module[
 	{positiveVertices, signIndex},
 	cells = {};
-	positiveVertices = Select[vertices, Map[toReal, #].{1, 0.0001, 0.00000001, 0.000000000001} > 0&];
+	seed1 = vertices[[1]];
+	baseVertices = Select[vertices, Simplify[goldenDot[seed1, #]] == {0, 0}& ];
+	seed2 = baseVertices[[1]];
+	base2Vertices = Select[baseVertices, 
+	    Simplify[goldenDot[seed2, #]] == {0, 0}
+	    && Map[toReal, #].{1, 0.0001, 0.00000001, 0.000000000001} > 0
+	    & ];
+	orthogonalFrame = {seed1, seed2, base2Vertices[[1]], base2Vertices[[2]]};
 
-	For[signIndex = 1, signIndex <= 2^4, signIndex++,
-		verticesInCell = Table[positiveVertices[[k]] * signs[[signIndex]][[k]], {k, 4}];
-		facesInCell = Subsets[verticesInCell, {3}];
-		AppendTo[cells, facesInCell];
+	connectingDimensions = Subsets[Range[4], {2}];
+	For[cdIndex = 1, cdIndex <= Length[connectingDimensions], cdIndex++,
+		connectingDimension = connectingDimensions[[cdIndex]];
+		otherDimensions = Complement[Range[4], connectingDimension];
+		For[cd1Sign = -1, cd1Sign <= 1, cd1Sign += 2,
+			For[cd2Sign = -1, cd2Sign <= 1, cd2Sign += 2,
+				coefs = {};
+				coef1 = {0, 0, 0, 0};
+				coef1[[connectingDimension[[1]] ]] = cd1Sign;
+				AppendTo[coefs, coef1];
+
+				coef2 = {0, 0, 0, 0};
+				coef2[[connectingDimension[[2]] ]] = cd2Sign;
+				AppendTo[coefs, coef2];
+
+				For[od1Sign = -1, od1Sign <= 1, od1Sign += 2,
+					For[od2Sign = -1, od2Sign <= 1, od2Sign += 2,
+						coefn = {1, 1, 1, 1};
+						coefn[[connectingDimension[[1]] ]] = cd1Sign;
+						coefn[[connectingDimension[[2]] ]] = cd2Sign;
+						coefn[[otherDimensions[[1]] ]] = od1Sign;
+						coefn[[otherDimensions[[2]] ]] = od2Sign;
+						coefn = coefn/2;
+						AppendTo[coefs, coefn];
+					];
+				];
+				verticesInCell = coefs.orthogonalFrame;
+				facesInCell = getFacesInOctahedralCell[verticesInCell];
+				AppendTo[cells, facesInCell];
+			];
+		];
 	];
 	cells
 ];
 
-vertices = cellsGoldenField[[1]];
-seed1 = vertices[[1]];
-baseVertices = Select[vertices, Simplify[goldenDot[seed1, #]] == {0, 0}& ];
-seed2 = baseVertices[[1]];
-base2Vertices = Select[baseVertices, 
-    Simplify[goldenDot[seed2, #]] == {0, 0}
-    && Map[toReal, #].{1, 0.0001, 0.00000001, 0.000000000001} > 0
-    & ];
-orthogonalFrame = {seed1, seed2, base2Vertices[[1]], base2Vertices[[2]]};
-otherVertices = cubeVertices[4].orthogonalFrame/2//Simplify;
+(* vertices = cellsGoldenField[[1]]; *)
 
+
+
+octahedralVertices = verticesInCell;
 
 
 
@@ -148,20 +191,14 @@ Print["Component count: " <> IntegerString[Length[components]]];
 (* 
 
 seeds:
-Vertex count: 56
-Edge count: 216
-Face count: 288
-Cell count: 144
+Vertex count: 120
+Edge count: 744
+Face count: 864
+Cell count: 216
 Component count: 9
+
 The right quaternion to use is [1+phi, -1+phi, 1-phi, -1+phi]
 
-
-75 16-cells (original 75)
-Vertex count: 600
-Edge count: 1800
-Face count: 2400
-Cell count: 1200
-Component count: 75
 
 crop command:
 mogrify -crop 1164x1164+493+0 *.png
