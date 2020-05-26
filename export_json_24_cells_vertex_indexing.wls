@@ -199,6 +199,27 @@ Component count: 9
 
 The right quaternion to use is [1+phi, -1+phi, 1-phi, -1+phi]
 
+compound_100_24_cells_vertex_indexing.json
+Vertex count: 600
+Edge count: 6000
+Face count: 9600
+Cell count: 2400
+Component count: 100
+
+compound_200_24_cells_vertex_indexing.json
+Vertex count: 600
+Edge count: 9600
+Face count: 19200
+Cell count: 4800
+Component count: 200
+
+compound_25var_a_24_cells_vertex_indexing.json
+Vertex count: 600
+Edge count: 2400
+Face count: 2400
+Cell count: 600
+Component count: 25
+
 
 crop command:
 mogrify -crop 1164x1164+493+0 *.png
