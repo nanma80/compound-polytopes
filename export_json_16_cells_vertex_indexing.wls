@@ -2,7 +2,7 @@
 
 dataFolder = "data";
 epsilon = 0.0000001;
-shape = "compound_75_16_cells_in_600_cell";
+shape = "compound_15_16_cells_in_600_cell";
 
 projectTo3d[vertex4d_] := {vertex4d[[1]], vertex4d[[2]], vertex4d[[3]]};
 reflect[point_, mirror_] := FullSimplify[point - 2 * (point.mirror)/(mirror.mirror)*mirror];

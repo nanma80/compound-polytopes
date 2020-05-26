@@ -2,7 +2,7 @@
 
 dataFolder = "data";
 epsilon = 0.0000001;
-shape = "compound_75_8_cells_in_600_cell";
+shape = "compound_15_8_cells_in_600_cell";
 swapDimensions = False;
 
 projectTo3d[vertex4d_] := {vertex4d[[1]], vertex4d[[2]], vertex4d[[3]]};
