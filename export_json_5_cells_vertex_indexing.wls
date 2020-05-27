@@ -2,7 +2,7 @@
 
 dataFolder = "data";
 epsilon = 0.0000001;
-shape = "compound_120var_a_5_cells";
+shape = "compound_120var_b_5_cells_in_120_cell";
 
 projectTo3d[vertex4d_] := {vertex4d[[1]], vertex4d[[2]], vertex4d[[3]]};
 reflect[point_, mirror_] := FullSimplify[point - 2 * (point.mirror)/(mirror.mirror)*mirror];
@@ -29,7 +29,7 @@ lookupTable = Flatten[Table[
 ], 1];
 
 dataFileName = FileNameJoin[{dataFolder, shape <> "_componentwise_vertices.wl"}];
-outputFileName = FileNameJoin[{dataFolder, shape <> "_vertex_indexing.json"}];
+outputFileName = FileNameJoin[{dataFolder, "json", shape <> "_vertex_indexing.json"}];
 
 Print["Reading data for " <> shape <> " from " <> dataFileName];
 
