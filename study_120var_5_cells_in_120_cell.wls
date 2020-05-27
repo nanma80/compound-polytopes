@@ -57,8 +57,6 @@ same5Cell[array1_, array2_] := Length[ Intersection[array1, array2, SameTest -> 
 compounds = Union[compounds, SameTest -> same5Cell];
 (* length = 7 *)
 
-(* compounds = compounds[[{2}]]; *)
-
 Print[Length[compounds]];
 
 For[i = 1, i<=Length[compounds], i++,
@@ -96,6 +94,9 @@ cellsBs = Table[
     , {k, 1, Length[compounds]}
 ];
 
+mirrorVector[v_] := {v[[1]], v[[2]], v[[3]], -v[[4]]};
+mirrorCellsAs = Map[mirrorVector, cellsAs, {3}];
+
 Print[Length/@cellsBs];
 
 For[k=1, k<=Length[compounds], k++,
@@ -126,3 +127,31 @@ Out[95]//MatrixForm= 120   0     0     0     0     0     0
 
                      0     20    20    20    20    20    20
  *)
+
+mirrorOverlapTable = Table[ 
+    Length[Intersection[mirrorCellsAs[[i]], cellsBs[[j]], SameTest -> same5Cell]], 
+    {i, Length[cellsAs]}, {j, Length[cellsBs]}];
+
+(* 
+In[70]:= mirrorOverlapTable//InputForm                                                                                  
+Out[70]//InputForm=
+{{120, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 120}, {0, 0, 120, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 120, 0},
+ {0, 0, 0, 0, 120, 0, 0}, {0, 120, 0, 0, 0, 0, 0}, {0, 0, 0, 120, 0, 0, 0}}
+
+In[71]:= mirrorOverlapTable//MatrixForm                                                                                 
+Out[71]//MatrixForm= 120   0     0     0     0     0     0
+
+                     0     0     0     0     0     0     120
+
+                     0     0     120   0     0     0     0
+
+                     0     0     0     0     0     120   0
+
+                     0     0     0     0     120   0     0
+
+                     0     120   0     0     0     0     0
+
+                     0     0     0     120   0     0     0
+
+ *)
+
