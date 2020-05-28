@@ -33,8 +33,8 @@
   <Viewing>
     <ViewModel distance="307.6243591308594" far="615.2487182617193" near="0.7690609092870492" parallel="false" stereoAngle="0.0" width="138.43096160888686">
       <LookAtPoint x="0.0" y="0.0" z="0.0"/>
-      <UpDirection x="-0.6469528729552605" y="0.7613485702917699" z="0.042430351042733946"/>
-      <LookDirection x="0.04904796482075602" y="-0.01397968059802637" z="0.9986985859994607"/>
+      <UpDirection x="-0.2628655789868238" y="0.9510565086938125" z="0.1624598555183959"/>
+      <LookDirection x="0.5257311082596874" y="0.0" z="0.8506508107373089"/>
     </ViewModel>
   </Viewing>
   <SymmetrySystem name="icosahedral" renderingStyle="solid connectors">
