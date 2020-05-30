@@ -134,6 +134,7 @@ For[i = 1, i<=Length[compounds], i++,
     Print[distanceTable == IdentityMatrix[5]*(5/4) - 1/4];
 ];
 
+vertex1 = compounds[[1]][[{1}]];
 edge12 = compounds[[1]][[{1, 2}]];
 face123 = compounds[[1]][[{1, 2, 3}]];
 cell1234 = compounds[[1]][[{1, 2, 3, 4}]];
@@ -148,8 +149,9 @@ mirrors = {
         };
 
 (* cells = compounds; *)
+cells = { vertex1 };
 (* cells = { edge12 }; *)
-cells = { face123 };
+(* cells = { face123 }; *)
 (* cells = { cell1234 }; *)
 
 Print[cells];
@@ -175,17 +177,17 @@ For[i = 0, i < 100 && countStart != Length[cells], i++,
 
 Print[ Intersection[Flatten[cells, 1], polytopeVertices, SameTest -> sameVertex]//Length ];
 
-outputFileName = FileNameJoin[{dataFolder, "compound_720_5_cells_faces.wl"}];
+(* outputFileName = FileNameJoin[{dataFolder, "compound_720_5_cells_faces.wl"}];
 
 If[FileExistsQ[outputFileName], DeleteFile[outputFileName]];
 Save[outputFileName, cells];
 Print["Saved polytope component data to " <> outputFileName];
-
+ *)
 (* 
 
 Compound of 720 5-cells:
 
-600 vertices
+600 vertices, one vertex can generate all 600
 7200 edges, one edge can generate all 7200
 7200 faces, one face can generate all 7200
 3600 cells, one cell can generate all 3600
