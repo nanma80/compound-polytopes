@@ -155,3 +155,16 @@ Out[71]//MatrixForm= 120   0     0     0     0     0     0
 
  *)
 
+For[k = 1, k<= Length[cellsAs], k++,
+    Print[Select[Range[120], same5Cell[cellsAs[[k, #]], mirrorCellsAs[[k, #]] ]&]//Length];
+];
+(* 20, 0, 0, 0, 0, 0, 0 *)
+(* No McMullen 5-cell is the mirror of itself *)
+
+For[k = 1, k<= Length[cellsAs], k++,
+    Print[Length[
+            Intersection[cellsAs[[k]], mirrorCellsAs[[k]], SameTest -> same5Cell]
+        ]
+    ];
+];
+(* 120, 20, 20, 20, 20, 20, 20 *)
